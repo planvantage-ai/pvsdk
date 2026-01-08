@@ -43,6 +43,30 @@ with PlanVantageClient(api_key="your_api_key") as client:
     sponsors = client.plansponsors.list()
 ```
 
+## Obtaining an API Key
+
+To use the PlanVantage API, you need to generate an API key from your account:
+
+1. Log in to [PlanVantage](https://app.planvantage.ai)
+2. Click your profile icon and select **Settings**
+3. Navigate to the **API Keys** tab
+4. Click **Create API Key**
+5. Enter a name for your key (e.g., "Production" or "Development")
+6. Optionally set an expiration period
+7. Click **Create** and copy your API key immediately
+
+**Important:** The full API key is only shown once at creation time. Store it securely and never commit it to version control. If you lose it, you'll need to create a new one.
+
+API keys follow the format `pv_live_<64-character-hex-string>` and can be used with either the `Bearer` or `ApiKey` authorization scheme:
+
+```bash
+# Using Bearer (recommended)
+curl -H "Authorization: Bearer pv_live_abc123..." https://api.planvantage.ai/account
+
+# Using ApiKey
+curl -H "Authorization: ApiKey pv_live_abc123..." https://api.planvantage.ai/account
+```
+
 ## Configuration
 
 The client can be configured via constructor arguments or environment variables:
@@ -56,7 +80,7 @@ The client can be configured via constructor arguments or environment variables:
 
 ```python
 client = PlanVantageClient(
-    api_key="pk_live_xxxxx",
+    api_key="pv_live_xxxxx",
     base_url="https://api.planvantage.ai",
     timeout=60.0,
     max_retries=5,
