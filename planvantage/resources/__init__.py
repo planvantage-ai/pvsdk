@@ -20,17 +20,6 @@ from planvantage.resources.contributions import (
     ProposedContributionTiersResource,
 )
 from planvantage.resources.plandocuments import PlanDocumentsResource
-from planvantage.resources.folders import FoldersResource
-from planvantage.resources.avmodels import AVModelsResource
-from planvantage.resources.dashboards import (
-    DashboardsResource,
-    DashboardVersionsResource,
-)
-from planvantage.resources.projections import ProjectionsResource
-from planvantage.resources.quotesets import (
-    QuoteSetsResource,
-    QuoteDocumentsResource,
-)
 from planvantage.resources.chat import ChatsResource, ChatMessagesResource
 from planvantage.resources.benchmarks import BenchmarksResource
 from planvantage.resources.settings import (
@@ -39,6 +28,7 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
+from planvantage.resources.apikeys import ApiKeysResource
 
 __all__ = [
     "BaseResource",
@@ -57,13 +47,6 @@ __all__ = [
     "ProposedContributionGroupsResource",
     "ProposedContributionTiersResource",
     "PlanDocumentsResource",
-    "FoldersResource",
-    "AVModelsResource",
-    "DashboardsResource",
-    "DashboardVersionsResource",
-    "ProjectionsResource",
-    "QuoteSetsResource",
-    "QuoteDocumentsResource",
     "ChatsResource",
     "ChatMessagesResource",
     "BenchmarksResource",
@@ -71,4 +54,5 @@ __all__ = [
     "RateModelSettingsResource",
     "RateModelAssumptionsResource",
     "RatePlanTierNamesResource",
+    "ApiKeysResource",
 ]

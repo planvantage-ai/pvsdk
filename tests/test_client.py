@@ -107,13 +107,6 @@ class TestPlanVantageClient:
             assert client.proposed_contribution_groups is not None
             assert client.proposed_contribution_tiers is not None
             assert client.plandocuments is not None
-            assert client.folders is not None
-            assert client.avmodels is not None
-            assert client.dashboards is not None
-            assert client.dashboard_versions is not None
-            assert client.projections is not None
-            assert client.quotesets is not None
-            assert client.quote_documents is not None
             assert client.chats is not None
             assert client.chat_messages is not None
             assert client.benchmarks is not None
@@ -121,3 +114,4 @@ class TestPlanVantageClient:
             assert client.rate_model_settings is not None
             assert client.rate_model_assumptions is not None
             assert client.tier_names is not None
+            assert client.apikeys is not None

@@ -27,17 +27,6 @@ from planvantage.resources.contributions import (
     ProposedContributionTiersResource,
 )
 from planvantage.resources.plandocuments import PlanDocumentsResource
-from planvantage.resources.folders import FoldersResource
-from planvantage.resources.avmodels import AVModelsResource
-from planvantage.resources.dashboards import (
-    DashboardsResource,
-    DashboardVersionsResource,
-)
-from planvantage.resources.projections import ProjectionsResource
-from planvantage.resources.quotesets import (
-    QuoteSetsResource,
-    QuoteDocumentsResource,
-)
 from planvantage.resources.chat import ChatsResource, ChatMessagesResource
 from planvantage.resources.benchmarks import BenchmarksResource
 from planvantage.resources.settings import (
@@ -46,6 +35,7 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
+from planvantage.resources.apikeys import ApiKeysResource
 
 
 class PlanVantageClient:
@@ -58,7 +48,7 @@ class PlanVantageClient:
         >>> from planvantage import PlanVantageClient
         >>>
         >>> # Initialize with API key
-        >>> client = PlanVantageClient(api_key="pk_...")
+        >>> client = PlanVantageClient(api_key="pv_live_...")
         >>>
         >>> # Or use environment variable PLANVANTAGE_API_KEY
         >>> client = PlanVantageClient()
@@ -119,13 +109,6 @@ class PlanVantageClient:
         self._proposed_contribution_groups: Optional[ProposedContributionGroupsResource] = None
         self._proposed_contribution_tiers: Optional[ProposedContributionTiersResource] = None
         self._plandocuments: Optional[PlanDocumentsResource] = None
-        self._folders: Optional[FoldersResource] = None
-        self._avmodels: Optional[AVModelsResource] = None
-        self._dashboards: Optional[DashboardsResource] = None
-        self._dashboard_versions: Optional[DashboardVersionsResource] = None
-        self._projections: Optional[ProjectionsResource] = None
-        self._quotesets: Optional[QuoteSetsResource] = None
-        self._quote_documents: Optional[QuoteDocumentsResource] = None
         self._chats: Optional[ChatsResource] = None
         self._chat_messages: Optional[ChatMessagesResource] = None
         self._benchmarks: Optional[BenchmarksResource] = None
@@ -133,6 +116,7 @@ class PlanVantageClient:
         self._rate_model_settings: Optional[RateModelSettingsResource] = None
         self._rate_model_assumptions: Optional[RateModelAssumptionsResource] = None
         self._tier_names: Optional[RatePlanTierNamesResource] = None
+        self._apikeys: Optional[ApiKeysResource] = None
 
     def close(self) -> None:
         """Close the client and release resources."""
@@ -298,95 +282,6 @@ class PlanVantageClient:
         return self._plandocuments
 
     @property
-    def folders(self) -> FoldersResource:
-        """Access folders resource.
-
-        Example:
-            >>> folder = client.folders.create(
-            ...     plan_sponsor_guid="ps_abc123",
-            ...     module="scenarios",
-            ...     name="2024 Renewals"
-            ... )
-        """
-        if self._folders is None:
-            self._folders = FoldersResource(self._http)
-        return self._folders
-
-    @property
-    def avmodels(self) -> AVModelsResource:
-        """Access AV models resource.
-
-        Example:
-            >>> model = client.avmodels.get("av_abc123")
-            >>> model = client.avmodels.create(
-            ...     plan_sponsor_guid="ps_abc123",
-            ...     name="Plan Analysis"
-            ... )
-        """
-        if self._avmodels is None:
-            self._avmodels = AVModelsResource(self._http)
-        return self._avmodels
-
-    @property
-    def dashboards(self) -> DashboardsResource:
-        """Access dashboards resource.
-
-        Example:
-            >>> dashboard = client.dashboards.get("db_abc123")
-            >>> dashboard = client.dashboards.create(
-            ...     plan_sponsor_guid="ps_abc123",
-            ...     name="Experience Dashboard"
-            ... )
-        """
-        if self._dashboards is None:
-            self._dashboards = DashboardsResource(self._http)
-        return self._dashboards
-
-    @property
-    def dashboard_versions(self) -> DashboardVersionsResource:
-        """Access dashboard versions resource."""
-        if self._dashboard_versions is None:
-            self._dashboard_versions = DashboardVersionsResource(self._http)
-        return self._dashboard_versions
-
-    @property
-    def projections(self) -> ProjectionsResource:
-        """Access projections resource.
-
-        Example:
-            >>> projection = client.projections.get("proj_abc123")
-            >>> projection = client.projections.create(
-            ...     plan_sponsor_guid="ps_abc123",
-            ...     name="2024 Projection"
-            ... )
-        """
-        if self._projections is None:
-            self._projections = ProjectionsResource(self._http)
-        return self._projections
-
-    @property
-    def quotesets(self) -> QuoteSetsResource:
-        """Access quote sets resource.
-
-        Example:
-            >>> quoteset = client.quotesets.get("qs_abc123")
-            >>> quoteset = client.quotesets.create(
-            ...     plan_sponsor_guid="ps_abc123",
-            ...     name="Carrier Quotes"
-            ... )
-        """
-        if self._quotesets is None:
-            self._quotesets = QuoteSetsResource(self._http)
-        return self._quotesets
-
-    @property
-    def quote_documents(self) -> QuoteDocumentsResource:
-        """Access quote documents resource."""
-        if self._quote_documents is None:
-            self._quote_documents = QuoteDocumentsResource(self._http)
-        return self._quote_documents
-
-    @property
     def chats(self) -> ChatsResource:
         """Access chats resource."""
         if self._chats is None:
@@ -443,3 +338,15 @@ class PlanVantageClient:
         if self._tier_names is None:
             self._tier_names = RatePlanTierNamesResource(self._http)
         return self._tier_names
+
+    @property
+    def apikeys(self) -> ApiKeysResource:
+        """Access API keys resource.
+
+        Example:
+            >>> keys = client.apikeys.list()
+            >>> new_key = client.apikeys.create(name="My API Key")
+        """
+        if self._apikeys is None:
+            self._apikeys = ApiKeysResource(self._http)
+        return self._apikeys

@@ -1,6 +1,6 @@
 """Scenarios resource."""
 
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from planvantage.models.scenario import (
     CalculateAllOptionsRequest,
@@ -8,25 +8,15 @@ from planvantage.models.scenario import (
     ClaimScenarioResponse,
     CreateScenarioFromPlanDocumentRequest,
     CreateScenarioFromPlanDocumentResponse,
-    ImportFromProjectionInput,
     ImportScenarioRequest,
-    ScenarioAdditiveAdjustmentData,
-    ScenarioAdditiveAdjustmentInput,
-    ScenarioAdminFeeData,
-    ScenarioAdminFeeInput,
     ScenarioCreateRequest,
     ScenarioData,
-    ScenarioFixedCostsData,
-    ScenarioFixedCostsInput,
     ScenarioHistoryInput,
-    ScenarioLFComponentColumnData,
-    ScenarioLFComponentColumnInput,
     ScenarioTierNameSetInput,
     ScenarioUpdateRequest,
     ScenarioUpdateResponse,
     ShareScenarioRequest,
     ShareScenarioResponse,
-    SharedScenarioPreview,
     SyncEnrollmentRequest,
 )
 from planvantage.resources.base import BaseResource
@@ -127,29 +117,6 @@ class ScenariosResource(BaseResource):
         data = self._http.post(f"/scenario/{guid}/clone")
         return ScenarioData.model_validate(data)
 
-    def move_to_folder(
-        self,
-        guid: str,
-        folder_guid: Optional[str] = None,
-    ) -> ScenarioData:
-        """Move a scenario to a folder.
-
-        Args:
-            guid: The scenario's unique identifier.
-            folder_guid: Target folder GUID, or None for root.
-
-        Returns:
-            The updated scenario data.
-
-        Example:
-            >>> client.scenarios.move_to_folder("sc_abc123", "folder_xyz")
-        """
-        data = self._http.patch(
-            f"/scenario/{guid}/folder",
-            json={"folder_guid": folder_guid},
-        )
-        return ScenarioData.model_validate(data)
-
     def apply_tier_name_set(
         self,
         guid: str,
@@ -183,7 +150,7 @@ class ScenariosResource(BaseResource):
             >>> client.scenarios.undo("sc_abc123", "plandesign")
         """
         request = ScenarioHistoryInput(scenario_guid=guid, model_type=model_type)
-        return self._http.post("/scenario/undo", json=self._serialize(request))
+        return self._http.post("/scenariohistory/undo", json=self._serialize(request))
 
     def redo(self, guid: str, model_type: str) -> Any:
         """Redo a previously undone change.
@@ -199,7 +166,7 @@ class ScenariosResource(BaseResource):
             >>> client.scenarios.redo("sc_abc123", "plandesign")
         """
         request = ScenarioHistoryInput(scenario_guid=guid, model_type=model_type)
-        return self._http.post("/scenario/redo", json=self._serialize(request))
+        return self._http.post("/scenariohistory/redo", json=self._serialize(request))
 
     def sync_enrollment(
         self,
@@ -235,21 +202,28 @@ class ScenariosResource(BaseResource):
         request = CalculateAllOptionsRequest(skip_matching_hashes=skip_matching_hashes)
         self._http.post(f"/scenario/{guid}/calculatealloptions", json=self._serialize(request))
 
-    def import_from(self, guid: str, source_scenario_guid: str) -> ScenarioData:
-        """Import data from another scenario.
+    def import_from(
+        self,
+        plan_sponsor_guid: str,
+        source_scenario_guid: str,
+    ) -> ScenarioData:
+        """Import a scenario from another plan sponsor.
 
         Args:
-            guid: The destination scenario's GUID.
+            plan_sponsor_guid: The destination plan sponsor's GUID.
             source_scenario_guid: The source scenario's GUID.
 
         Returns:
-            The updated scenario data.
+            The imported scenario data.
 
         Example:
-            >>> client.scenarios.import_from("sc_dest", "sc_source")
+            >>> client.scenarios.import_from("ps_dest", "sc_source")
         """
         request = ImportScenarioRequest(scenario_guid=source_scenario_guid)
-        data = self._http.post(f"/scenario/{guid}/import", json=self._serialize(request))
+        data = self._http.post(
+            f"/plansponsor/{plan_sponsor_guid}/importscenario",
+            json=self._serialize(request),
+        )
         return ScenarioData.model_validate(data)
 
     def create_from_plan_document(
@@ -279,7 +253,7 @@ class ScenariosResource(BaseResource):
             name=name,
         )
         data = self._http.post(
-            f"/plansponsor/{plan_sponsor_guid}/scenario/fromplandocument",
+            f"/plansponsor/{plan_sponsor_guid}/createscenariofromplandocument",
             json=self._serialize(request),
         )
         return CreateScenarioFromPlanDocumentResponse.model_validate(data)
@@ -308,20 +282,19 @@ class ScenariosResource(BaseResource):
         data = self._http.post(f"/scenario/{guid}/share", json=self._serialize(request))
         return ShareScenarioResponse.model_validate(data)
 
-    def get_share_preview(self, token: str) -> SharedScenarioPreview:
-        """Get preview information for a shared scenario.
+    def get_shared(self, token: str) -> Any:
+        """Get information about a shared scenario.
 
         Args:
-            token: The share token.
+            token: The share token (scenario GUID).
 
         Returns:
-            Preview information about the shared scenario.
+            Shared scenario information.
 
         Example:
-            >>> preview = client.scenarios.get_share_preview("share_token_xyz")
+            >>> info = client.scenarios.get_shared("share_token_xyz")
         """
-        data = self._http.get(f"/scenario/shared/{token}/preview")
-        return SharedScenarioPreview.model_validate(data)
+        return self._http.get(f"/shared/scenario/{token}")
 
     def claim_shared(
         self,
@@ -331,7 +304,7 @@ class ScenariosResource(BaseResource):
         """Claim a shared scenario and create a copy.
 
         Args:
-            token: The share token.
+            token: The share token (scenario GUID).
             plan_sponsor_name: Name for the new plan sponsor.
 
         Returns:
@@ -344,224 +317,19 @@ class ScenariosResource(BaseResource):
             ... )
         """
         request = ClaimScenarioRequest(plan_sponsor_name=plan_sponsor_name)
-        data = self._http.post(f"/scenario/shared/{token}/claim", json=self._serialize(request))
+        data = self._http.post(f"/shared/scenario/{token}/claim", json=self._serialize(request))
         return ClaimScenarioResponse.model_validate(data)
 
-    # Fixed Costs methods
-    def get_fixed_costs(self, guid: str) -> ScenarioFixedCostsData:
-        """Get fixed costs for a scenario.
+    def export(self, guid: str) -> Any:
+        """Export a scenario.
 
         Args:
             guid: The scenario's unique identifier.
 
         Returns:
-            Fixed costs data.
+            The exported scenario data.
+
+        Example:
+            >>> data = client.scenarios.export("sc_abc123")
         """
-        data = self._http.get(f"/scenario/{guid}/fixedcosts")
-        return ScenarioFixedCostsData.model_validate(data)
-
-    def update_fixed_costs(
-        self,
-        guid: str,
-        **kwargs: Any,
-    ) -> ScenarioFixedCostsData:
-        """Update fixed costs for a scenario.
-
-        Args:
-            guid: The scenario's unique identifier.
-            **kwargs: Fixed cost fields to update.
-
-        Returns:
-            Updated fixed costs data.
-        """
-        data = self._http.patch(f"/scenario/{guid}/fixedcosts", json=kwargs)
-        return ScenarioFixedCostsData.model_validate(data)
-
-    # Admin Fee methods
-    def create_admin_fee(
-        self,
-        guid: str,
-        name: str,
-        **kwargs: Any,
-    ) -> ScenarioAdminFeeData:
-        """Create an admin fee for a scenario.
-
-        Args:
-            guid: The scenario's unique identifier.
-            name: Name for the admin fee.
-            **kwargs: Additional admin fee fields.
-
-        Returns:
-            Created admin fee data.
-        """
-        request = ScenarioAdminFeeInput(name=name, **kwargs)
-        data = self._http.post(f"/scenario/{guid}/adminfee", json=self._serialize(request))
-        return ScenarioAdminFeeData.model_validate(data)
-
-    def update_admin_fee(
-        self,
-        guid: str,
-        fee_guid: str,
-        **kwargs: Any,
-    ) -> ScenarioAdminFeeData:
-        """Update an admin fee.
-
-        Args:
-            guid: The scenario's unique identifier.
-            fee_guid: The admin fee's unique identifier.
-            **kwargs: Fields to update.
-
-        Returns:
-            Updated admin fee data.
-        """
-        data = self._http.patch(f"/scenario/{guid}/adminfee/{fee_guid}", json=kwargs)
-        return ScenarioAdminFeeData.model_validate(data)
-
-    def delete_admin_fee(self, guid: str, fee_guid: str) -> None:
-        """Delete an admin fee.
-
-        Args:
-            guid: The scenario's unique identifier.
-            fee_guid: The admin fee's unique identifier.
-        """
-        self._http.delete(f"/scenario/{guid}/adminfee/{fee_guid}")
-
-    # Additive Adjustment methods
-    def create_additive_adjustment(
-        self,
-        guid: str,
-        name: str,
-        **kwargs: Any,
-    ) -> ScenarioAdditiveAdjustmentData:
-        """Create an additive adjustment for a scenario.
-
-        Args:
-            guid: The scenario's unique identifier.
-            name: Name for the adjustment.
-            **kwargs: Additional adjustment fields.
-
-        Returns:
-            Created adjustment data.
-        """
-        request = ScenarioAdditiveAdjustmentInput(name=name, **kwargs)
-        data = self._http.post(
-            f"/scenario/{guid}/additiveadjustment",
-            json=self._serialize(request),
-        )
-        return ScenarioAdditiveAdjustmentData.model_validate(data)
-
-    def update_additive_adjustment(
-        self,
-        guid: str,
-        adjustment_guid: str,
-        **kwargs: Any,
-    ) -> ScenarioAdditiveAdjustmentData:
-        """Update an additive adjustment.
-
-        Args:
-            guid: The scenario's unique identifier.
-            adjustment_guid: The adjustment's unique identifier.
-            **kwargs: Fields to update.
-
-        Returns:
-            Updated adjustment data.
-        """
-        data = self._http.patch(
-            f"/scenario/{guid}/additiveadjustment/{adjustment_guid}",
-            json=kwargs,
-        )
-        return ScenarioAdditiveAdjustmentData.model_validate(data)
-
-    def delete_additive_adjustment(self, guid: str, adjustment_guid: str) -> None:
-        """Delete an additive adjustment.
-
-        Args:
-            guid: The scenario's unique identifier.
-            adjustment_guid: The adjustment's unique identifier.
-        """
-        self._http.delete(f"/scenario/{guid}/additiveadjustment/{adjustment_guid}")
-
-    # Import from Projection
-    def import_from_projection(
-        self,
-        guid: str,
-        projection_guid: str,
-    ) -> ScenarioData:
-        """Import data from a renewal projection.
-
-        Args:
-            guid: The scenario's unique identifier.
-            projection_guid: The projection's GUID.
-
-        Returns:
-            Updated scenario data.
-        """
-        request = ImportFromProjectionInput(projection_guid=projection_guid)
-        data = self._http.post(
-            f"/scenario/{guid}/import-from-projection",
-            json=self._serialize(request),
-        )
-        return ScenarioData.model_validate(data)
-
-    # LF Component Columns
-    def list_lf_columns(self, guid: str) -> list[ScenarioLFComponentColumnData]:
-        """List level-funded component columns for a scenario.
-
-        Args:
-            guid: The scenario's unique identifier.
-
-        Returns:
-            List of LF component columns.
-        """
-        data = self._http.get(f"/scenario/{guid}/lf-columns")
-        if isinstance(data, list):
-            return [ScenarioLFComponentColumnData.model_validate(item) for item in data]
-        return []
-
-    def create_lf_column(
-        self,
-        guid: str,
-        name: str,
-        **kwargs: Any,
-    ) -> ScenarioLFComponentColumnData:
-        """Create a level-funded component column.
-
-        Args:
-            guid: The scenario's unique identifier.
-            name: Name for the column.
-            **kwargs: Additional column fields.
-
-        Returns:
-            Created column data.
-        """
-        request = ScenarioLFComponentColumnInput(name=name, **kwargs)
-        data = self._http.post(f"/scenario/{guid}/lf-columns", json=self._serialize(request))
-        return ScenarioLFComponentColumnData.model_validate(data)
-
-    def update_lf_column(
-        self,
-        guid: str,
-        column_guid: str,
-        **kwargs: Any,
-    ) -> ScenarioLFComponentColumnData:
-        """Update a level-funded component column.
-
-        Args:
-            guid: The scenario's unique identifier.
-            column_guid: The column's unique identifier.
-            **kwargs: Fields to update.
-
-        Returns:
-            Updated column data.
-        """
-        data = self._http.patch(f"/scenario/{guid}/lf-columns/{column_guid}", json=kwargs)
-        return ScenarioLFComponentColumnData.model_validate(data)
-
-    def delete_lf_column(self, guid: str, column_guid: str) -> None:
-        """Delete a level-funded component column.
-
-        Args:
-            guid: The scenario's unique identifier.
-            column_guid: The column's unique identifier.
-        """
-        self._http.delete(f"/scenario/{guid}/lf-columns/{column_guid}")
+        return self._http.get(f"/scenario/{guid}/export")

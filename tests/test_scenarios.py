@@ -97,21 +97,6 @@ class TestScenariosResource:
         assert isinstance(cloned, ScenarioData)
         assert cloned.guid == "sc_cloned123"
 
-    def test_move_to_folder(
-        self,
-        client: PlanVantageClient,
-        mock_api: respx.MockRouter,
-        sample_scenario_data: dict[str, Any],
-    ) -> None:
-        """Test moving a scenario to a folder."""
-        mock_api.patch("/scenario/sc_test123/folder").mock(
-            return_value=Response(200, json=sample_scenario_data)
-        )
-
-        scenario = client.scenarios.move_to_folder("sc_test123", "folder_xyz")
-
-        assert isinstance(scenario, ScenarioData)
-
     def test_calculate_all_options(
         self,
         client: PlanVantageClient,
