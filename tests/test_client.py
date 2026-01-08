@@ -114,4 +114,3 @@ class TestPlanVantageClient:
             assert client.rate_model_settings is not None
             assert client.rate_model_assumptions is not None
             assert client.tier_names is not None
-            assert client.apikeys is not None

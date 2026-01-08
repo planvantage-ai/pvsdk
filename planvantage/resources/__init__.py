@@ -28,7 +28,6 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
-from planvantage.resources.apikeys import ApiKeysResource
 
 __all__ = [
     "BaseResource",
@@ -54,5 +53,4 @@ __all__ = [
     "RateModelSettingsResource",
     "RateModelAssumptionsResource",
     "RatePlanTierNamesResource",
-    "ApiKeysResource",
 ]

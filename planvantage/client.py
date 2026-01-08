@@ -35,7 +35,6 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
-from planvantage.resources.apikeys import ApiKeysResource
 
 
 class PlanVantageClient:
@@ -116,7 +115,6 @@ class PlanVantageClient:
         self._rate_model_settings: Optional[RateModelSettingsResource] = None
         self._rate_model_assumptions: Optional[RateModelAssumptionsResource] = None
         self._tier_names: Optional[RatePlanTierNamesResource] = None
-        self._apikeys: Optional[ApiKeysResource] = None
 
     def close(self) -> None:
         """Close the client and release resources."""
@@ -338,15 +336,3 @@ class PlanVantageClient:
         if self._tier_names is None:
             self._tier_names = RatePlanTierNamesResource(self._http)
         return self._tier_names
-
-    @property
-    def apikeys(self) -> ApiKeysResource:
-        """Access API keys resource.
-
-        Example:
-            >>> keys = client.apikeys.list()
-            >>> new_key = client.apikeys.create(name="My API Key")
-        """
-        if self._apikeys is None:
-            self._apikeys = ApiKeysResource(self._http)
-        return self._apikeys

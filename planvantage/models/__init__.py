@@ -75,14 +75,7 @@ from planvantage.models.plandocument import (
     PlanDocumentInput,
 )
 from planvantage.models.chat import ChatInfo
-from planvantage.models.user import (
-    ApiKey,
-    ApiKeyListResponse,
-    CreateApiKeyRequest,
-    CreateApiKeyResponse,
-    LimitedUserInput,
-    RevokeApiKeyRequest,
-)
+from planvantage.models.user import LimitedUserInput
 
 __all__ = [
     # Base
@@ -156,11 +149,6 @@ __all__ = [
     "PlanDocumentInput",
     # Chat
     "ChatInfo",
-    # User & API Keys
+    # User
     "LimitedUserInput",
-    "ApiKey",
-    "CreateApiKeyRequest",
-    "CreateApiKeyResponse",
-    "ApiKeyListResponse",
-    "RevokeApiKeyRequest",
 ]
