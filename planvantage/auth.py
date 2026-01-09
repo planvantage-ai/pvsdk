@@ -64,4 +64,5 @@ class AuthConfig:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "X-PV-Client": "python-sdk",
         }

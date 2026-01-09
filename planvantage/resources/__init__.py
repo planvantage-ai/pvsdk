@@ -20,7 +20,6 @@ from planvantage.resources.contributions import (
     ProposedContributionTiersResource,
 )
 from planvantage.resources.plandocuments import PlanDocumentsResource
-from planvantage.resources.chat import ChatsResource, ChatMessagesResource
 from planvantage.resources.benchmarks import BenchmarksResource
 from planvantage.resources.settings import (
     PlanModelSettingsResource,
@@ -46,8 +45,6 @@ __all__ = [
     "ProposedContributionGroupsResource",
     "ProposedContributionTiersResource",
     "PlanDocumentsResource",
-    "ChatsResource",
-    "ChatMessagesResource",
     "BenchmarksResource",
     "PlanModelSettingsResource",
     "RateModelSettingsResource",

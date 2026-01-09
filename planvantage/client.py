@@ -27,7 +27,6 @@ from planvantage.resources.contributions import (
     ProposedContributionTiersResource,
 )
 from planvantage.resources.plandocuments import PlanDocumentsResource
-from planvantage.resources.chat import ChatsResource, ChatMessagesResource
 from planvantage.resources.benchmarks import BenchmarksResource
 from planvantage.resources.settings import (
     PlanModelSettingsResource,
@@ -108,8 +107,6 @@ class PlanVantageClient:
         self._proposed_contribution_groups: Optional[ProposedContributionGroupsResource] = None
         self._proposed_contribution_tiers: Optional[ProposedContributionTiersResource] = None
         self._plandocuments: Optional[PlanDocumentsResource] = None
-        self._chats: Optional[ChatsResource] = None
-        self._chat_messages: Optional[ChatMessagesResource] = None
         self._benchmarks: Optional[BenchmarksResource] = None
         self._plan_model_settings: Optional[PlanModelSettingsResource] = None
         self._rate_model_settings: Optional[RateModelSettingsResource] = None
@@ -278,20 +275,6 @@ class PlanVantageClient:
         if self._plandocuments is None:
             self._plandocuments = PlanDocumentsResource(self._http)
         return self._plandocuments
-
-    @property
-    def chats(self) -> ChatsResource:
-        """Access chats resource."""
-        if self._chats is None:
-            self._chats = ChatsResource(self._http)
-        return self._chats
-
-    @property
-    def chat_messages(self) -> ChatMessagesResource:
-        """Access chat messages resource."""
-        if self._chat_messages is None:
-            self._chat_messages = ChatMessagesResource(self._http)
-        return self._chat_messages
 
     @property
     def benchmarks(self) -> BenchmarksResource:

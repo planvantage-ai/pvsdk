@@ -74,7 +74,6 @@ from planvantage.models.plandocument import (
     PlanDocumentInfo,
     PlanDocumentInput,
 )
-from planvantage.models.chat import ChatInfo
 from planvantage.models.user import LimitedUserInput
 
 __all__ = [
@@ -147,8 +146,6 @@ __all__ = [
     "PlanDocumentInfo",
     "PlanDocumentData",
     "PlanDocumentInput",
-    # Chat
-    "ChatInfo",
     # User
     "LimitedUserInput",
 ]
