@@ -75,6 +75,25 @@ from planvantage.models.plandocument import (
     PlanDocumentInput,
 )
 from planvantage.models.user import LimitedUserInput
+from planvantage.models.census import (
+    ApplyCensusEnrollmentResult,
+    CensusData,
+    CensusInfo,
+    CensusMappingConfig,
+    CensusMappingValidation,
+    CensusOptOutMapping,
+    CensusPlanMapping,
+    CensusSchemaConfig,
+    CensusTemplateConfig,
+    CensusTierMapping,
+    CensusUploadResult,
+    MigrationChange,
+    MigrationEstimation,
+    ScenarioCensusInfo,
+)
+# NOTE: The following models are intentionally excluded:
+# - AIModelResponse (aimodel.py) - internal use only
+# - ApiKeyData, ApiKeyCreateResponse (apikey.py) - managed via web UI only
 
 __all__ = [
     # Base
@@ -148,4 +167,19 @@ __all__ = [
     "PlanDocumentInput",
     # User
     "LimitedUserInput",
+    # Census
+    "CensusInfo",
+    "CensusData",
+    "CensusSchemaConfig",
+    "CensusMappingConfig",
+    "CensusMappingValidation",
+    "CensusPlanMapping",
+    "CensusTierMapping",
+    "CensusOptOutMapping",
+    "CensusTemplateConfig",
+    "CensusUploadResult",
+    "ScenarioCensusInfo",
+    "MigrationChange",
+    "MigrationEstimation",
+    "ApplyCensusEnrollmentResult",
 ]

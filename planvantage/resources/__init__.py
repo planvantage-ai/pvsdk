@@ -27,6 +27,12 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
+from planvantage.resources.census import CensusResource, ScenarioCensusResource
+from planvantage.resources.export import ExportResource
+
+# NOTE: The following resources are intentionally excluded:
+# - AIModelsResource (aimodels.py) - internal use only
+# - ApiKeysResource (apikeys.py) - managed via web UI only
 
 __all__ = [
     "BaseResource",
@@ -50,4 +56,7 @@ __all__ = [
     "RateModelSettingsResource",
     "RateModelAssumptionsResource",
     "RatePlanTierNamesResource",
+    "CensusResource",
+    "ScenarioCensusResource",
+    "ExportResource",
 ]

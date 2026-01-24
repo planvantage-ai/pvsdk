@@ -1,7 +1,10 @@
 """PlanSponsors resource."""
 
+from __future__ import annotations
+
 from typing import Any, Optional, Union
 
+from planvantage.models.census import CensusInfo
 from planvantage.models.plansponsor import (
     PlanSponsorCreateRequest,
     PlanSponsorData,
@@ -101,3 +104,22 @@ class PlanSponsorsResource(BaseResource):
             >>> client.plansponsors.delete("ps_abc123")
         """
         self._http.delete(f"/plansponsor/{guid}")
+
+    def list_censuses(self, guid: str) -> list[CensusInfo]:
+        """List all censuses for a plan sponsor.
+
+        Args:
+            guid: The plan sponsor's unique identifier.
+
+        Returns:
+            List of census summaries.
+
+        Example:
+            >>> censuses = client.plansponsors.list_censuses("ps_abc123")
+            >>> for census in censuses:
+            ...     print(f"{census.name}: {census.row_count} rows")
+        """
+        data = self._http.get(f"/plansponsor/{guid}/censuses")
+        if isinstance(data, list):
+            return [CensusInfo.model_validate(item) for item in data]
+        return []

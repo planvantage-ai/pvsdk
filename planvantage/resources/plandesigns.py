@@ -172,6 +172,38 @@ class PlanDesignsResource(BaseResource):
         )
         return PlanDesignData.model_validate(data)
 
+    def copy_to_proposed(self, guid: str) -> PlanDesignData:
+        """Copy a current plan design to the proposed section.
+
+        Creates a linked copy of the plan design in the proposed section,
+        maintaining a visual link between current and proposed plans.
+
+        Args:
+            guid: The plan design's unique identifier.
+
+        Returns:
+            The new proposed plan design data.
+
+        Example:
+            >>> proposed = client.plandesigns.copy_to_proposed("pd_abc123")
+        """
+        data = self._http.post(f"/plandesign/{guid}/copy-to-proposed")
+        return PlanDesignData.model_validate(data)
+
+    def break_link(self, guid: str) -> None:
+        """Break the link between current and proposed plan designs.
+
+        Removes the visual link between a current and proposed plan,
+        making the proposed plan independent.
+
+        Args:
+            guid: The plan design's unique identifier (either current or proposed).
+
+        Example:
+            >>> client.plandesigns.break_link("pd_abc123")
+        """
+        self._http.post(f"/plandesign/{guid}/break-link")
+
 
 class PlanDesignTiersResource(BaseResource):
     """Resource for managing plan design tiers."""

@@ -333,3 +333,41 @@ class ScenariosResource(BaseResource):
             >>> data = client.scenarios.export("sc_abc123")
         """
         return self._http.get(f"/scenario/{guid}/export")
+
+    def reset_tier_ratios_to_default(self, guid: str) -> None:
+        """Reset tier ratios to default values.
+
+        Args:
+            guid: The scenario's unique identifier.
+
+        Example:
+            >>> client.scenarios.reset_tier_ratios_to_default("sc_abc123")
+        """
+        self._http.post(f"/scenario/{guid}/resettierratios/default")
+
+    def reset_tier_ratios_to_current(self, guid: str) -> None:
+        """Reset tier ratios to match current plans.
+
+        Args:
+            guid: The scenario's unique identifier.
+
+        Example:
+            >>> client.scenarios.reset_tier_ratios_to_current("sc_abc123")
+        """
+        self._http.post(f"/scenario/{guid}/resettierratios/current")
+
+    def reset_tier_ratios_maintain_base_rate(self, guid: str) -> None:
+        """Reset tier ratios while maintaining base (employee-only) rate.
+
+        When proposed plans have a different tier structure than current plans,
+        this method recalculates tier ratios while keeping the employee-only
+        rate consistent for accurate comparisons.
+
+        Args:
+            guid: The scenario's unique identifier.
+
+        Example:
+            >>> # After changing from 4-tier to 3-tier structure
+            >>> client.scenarios.reset_tier_ratios_maintain_base_rate("sc_abc123")
+        """
+        self._http.post(f"/scenario/{guid}/resettierratios/maintainbaserate")

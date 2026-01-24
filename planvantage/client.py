@@ -34,6 +34,12 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
+from planvantage.resources.census import CensusResource, ScenarioCensusResource
+from planvantage.resources.export import ExportResource
+
+# NOTE: The following resources are intentionally excluded from the SDK:
+# - AIModelsResource (ai_models) - internal use only
+# - ApiKeysResource (api_keys) - managed via web UI only
 
 
 class PlanVantageClient:
@@ -112,6 +118,9 @@ class PlanVantageClient:
         self._rate_model_settings: Optional[RateModelSettingsResource] = None
         self._rate_model_assumptions: Optional[RateModelAssumptionsResource] = None
         self._tier_names: Optional[RatePlanTierNamesResource] = None
+        self._census: Optional[CensusResource] = None
+        self._scenario_census: Optional[ScenarioCensusResource] = None
+        self._export: Optional[ExportResource] = None
 
     def close(self) -> None:
         """Close the client and release resources."""
@@ -319,3 +328,41 @@ class PlanVantageClient:
         if self._tier_names is None:
             self._tier_names = RatePlanTierNamesResource(self._http)
         return self._tier_names
+
+    @property
+    def census(self) -> CensusResource:
+        """Access census resource.
+
+        Example:
+            >>> censuses = client.census.list_for_plan_sponsor("ps_abc123")
+            >>> with open("census.csv", "rb") as f:
+            ...     result = client.census.upload("ps_abc123", f)
+        """
+        if self._census is None:
+            self._census = CensusResource(self._http)
+        return self._census
+
+    @property
+    def scenario_census(self) -> ScenarioCensusResource:
+        """Access scenario census resource.
+
+        Example:
+            >>> info = client.scenario_census.get("sc_abc123")
+            >>> client.scenario_census.map("sc_abc123", "census_xyz")
+            >>> client.scenario_census.apply("sc_abc123", apply_to="both")
+        """
+        if self._scenario_census is None:
+            self._scenario_census = ScenarioCensusResource(self._http)
+        return self._scenario_census
+
+    @property
+    def export(self) -> ExportResource:
+        """Access bulk export resource.
+
+        Example:
+            >>> csv_data = client.export.plan_designs_csv()
+            >>> csv_data = client.export.rates_contributions_csv()
+        """
+        if self._export is None:
+            self._export = ExportResource(self._http)
+        return self._export

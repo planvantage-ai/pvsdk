@@ -304,3 +304,55 @@ class HTTPClient:
             Parsed response data.
         """
         return self.request("DELETE", path, params=params)
+
+    def get_raw(
+        self,
+        path: str,
+        params: Optional[dict[str, Any]] = None,
+    ) -> bytes:
+        """Make a GET request and return raw bytes.
+
+        Args:
+            path: API endpoint path.
+            params: Query parameters.
+
+        Returns:
+            Raw response bytes.
+        """
+        try:
+            response = self.client.request(
+                method="GET",
+                url=path,
+                params=params,
+            )
+            if response.status_code >= 200 and response.status_code < 300:
+                return response.content
+            # Handle errors using standard handler
+            self._handle_response(response)
+            return b""  # Never reached
+        except httpx.ConnectError as e:
+            raise ConnectionError(f"Failed to connect: {e}") from e
+        except httpx.TimeoutException as e:
+            raise TimeoutError(f"Request timed out: {e}") from e
+        except PlanVantageError:
+            raise
+        except Exception as e:
+            raise APIError(f"Unexpected error: {e}") from e
+
+    def post_multipart(
+        self,
+        path: str,
+        files: Optional[dict[str, BinaryIO]] = None,
+        data: Optional[dict[str, str]] = None,
+    ) -> Any:
+        """Make a POST request with multipart form data.
+
+        Args:
+            path: API endpoint path.
+            files: Files to upload.
+            data: Form data fields.
+
+        Returns:
+            Parsed response data.
+        """
+        return self.request("POST", path, data=data, files=files)
