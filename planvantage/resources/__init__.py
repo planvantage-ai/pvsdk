@@ -29,6 +29,8 @@ from planvantage.resources.settings import (
 )
 from planvantage.resources.census import CensusResource, ScenarioCensusResource
 from planvantage.resources.export import ExportResource
+from planvantage.resources.exhibits import ExhibitsResource, ExhibitSettingsResource
+from planvantage.resources.summary import SummarySettingsResource, FixedCostsResource
 
 # NOTE: The following resources are intentionally excluded:
 # - AIModelsResource (aimodels.py) - internal use only
@@ -59,4 +61,8 @@ __all__ = [
     "CensusResource",
     "ScenarioCensusResource",
     "ExportResource",
+    "ExhibitsResource",
+    "ExhibitSettingsResource",
+    "SummarySettingsResource",
+    "FixedCostsResource",
 ]

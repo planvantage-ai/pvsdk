@@ -320,6 +320,21 @@ class ScenariosResource(BaseResource):
         data = self._http.post(f"/shared/scenario/{token}/claim", json=self._serialize(request))
         return ClaimScenarioResponse.model_validate(data)
 
+    def get_summary(self, guid: str) -> ScenarioData:
+        """Get the summary view for a scenario.
+
+        Returns scenario data focused on the summary tab including
+        fixed costs, totals, and contribution summary.
+
+        Args:
+            guid: The scenario's unique identifier.
+
+        Returns:
+            Scenario data with summary view.
+        """
+        data = self._http.get(f"/scenario/{guid}/summary")
+        return ScenarioData.model_validate(data)
+
     def export(self, guid: str) -> Any:
         """Export a scenario.
 

@@ -36,6 +36,8 @@ from planvantage.resources.settings import (
 )
 from planvantage.resources.census import CensusResource, ScenarioCensusResource
 from planvantage.resources.export import ExportResource
+from planvantage.resources.exhibits import ExhibitsResource, ExhibitSettingsResource
+from planvantage.resources.summary import SummarySettingsResource, FixedCostsResource
 
 # NOTE: The following resources are intentionally excluded from the SDK:
 # - AIModelsResource (ai_models) - internal use only
@@ -121,6 +123,10 @@ class PlanVantageClient:
         self._census: Optional[CensusResource] = None
         self._scenario_census: Optional[ScenarioCensusResource] = None
         self._export: Optional[ExportResource] = None
+        self._exhibits: Optional[ExhibitsResource] = None
+        self._exhibit_settings: Optional[ExhibitSettingsResource] = None
+        self._summary_settings: Optional[SummarySettingsResource] = None
+        self._fixed_costs: Optional[FixedCostsResource] = None
 
     def close(self) -> None:
         """Close the client and release resources."""
@@ -366,3 +372,40 @@ class PlanVantageClient:
         if self._export is None:
             self._export = ExportResource(self._http)
         return self._export
+
+    @property
+    def exhibits(self) -> ExhibitsResource:
+        """Access exhibits resource.
+
+        Example:
+            >>> exhibits = client.exhibits.list("ps_abc123")
+            >>> table = client.exhibits.get_table("ex_abc123")
+        """
+        if self._exhibits is None:
+            self._exhibits = ExhibitsResource(self._http)
+        return self._exhibits
+
+    @property
+    def exhibit_settings(self) -> ExhibitSettingsResource:
+        """Access exhibit settings resource."""
+        if self._exhibit_settings is None:
+            self._exhibit_settings = ExhibitSettingsResource(self._http)
+        return self._exhibit_settings
+
+    @property
+    def summary_settings(self) -> SummarySettingsResource:
+        """Access summary settings resource."""
+        if self._summary_settings is None:
+            self._summary_settings = SummarySettingsResource(self._http)
+        return self._summary_settings
+
+    @property
+    def fixed_costs(self) -> FixedCostsResource:
+        """Access fixed costs resource.
+
+        Example:
+            >>> item = client.fixed_costs.create("sc_abc123", name="Admin Fees")
+        """
+        if self._fixed_costs is None:
+            self._fixed_costs = FixedCostsResource(self._http)
+        return self._fixed_costs

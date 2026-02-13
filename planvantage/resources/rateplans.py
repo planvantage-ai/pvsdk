@@ -104,6 +104,15 @@ class CurrentRatePlansResource(BaseResource):
             json={"tierNameSetGuid": tier_name_set_guid},
         )
 
+    def move(self, guid: str, direction: str) -> None:
+        """Move a current rate plan up or down.
+
+        Args:
+            guid: The rate plan's unique identifier.
+            direction: Direction to move ("up" or "down").
+        """
+        self._http.post(f"/currentrateplan/{guid}/move", json={"direction": direction})
+
 
 class ProposedRatePlansResource(BaseResource):
     """Resource for managing proposed rate plans."""
@@ -184,6 +193,15 @@ class ProposedRatePlansResource(BaseResource):
             f"/proposedrateplan/{guid}/tiernameset",
             json={"tierNameSetGuid": tier_name_set_guid},
         )
+
+    def move(self, guid: str, direction: str) -> None:
+        """Move a proposed rate plan up or down.
+
+        Args:
+            guid: The rate plan's unique identifier.
+            direction: Direction to move ("up" or "down").
+        """
+        self._http.post(f"/proposedrateplan/{guid}/move", json={"direction": direction})
 
     def reset_tier_ratios_to_default(self, guid: str) -> None:
         """Reset tier ratios to default values.

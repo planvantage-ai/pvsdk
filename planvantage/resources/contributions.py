@@ -94,6 +94,15 @@ class CurrentContributionGroupsResource(BaseResource):
         """
         self._http.post(f"/currentcontributiongroup/{guid}/copy")
 
+    def move(self, guid: str, direction: str) -> None:
+        """Move a current contribution group up or down.
+
+        Args:
+            guid: The group's unique identifier.
+            direction: Direction to move ("up" or "down").
+        """
+        self._http.post(f"/currentcontributiongroup/{guid}/move", json={"direction": direction})
+
 
 class CurrentContributionTiersResource(BaseResource):
     """Resource for managing current contribution tiers."""
@@ -346,6 +355,15 @@ class ProposedContributionGroupsResource(BaseResource):
             rate_plan_guid: The rate plan's GUID.
         """
         self._http.delete(f"/proposedcontributiongroup/{guid}/rateplan/{rate_plan_guid}")
+
+    def move(self, guid: str, direction: str) -> None:
+        """Move a proposed contribution group up or down.
+
+        Args:
+            guid: The group's unique identifier.
+            direction: Direction to move ("up" or "down").
+        """
+        self._http.post(f"/proposedcontributiongroup/{guid}/move", json={"direction": direction})
 
 
 class ProposedContributionTiersResource(BaseResource):

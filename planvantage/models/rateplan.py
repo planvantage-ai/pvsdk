@@ -120,9 +120,14 @@ class RateModelAssumptionsData(PlanVantageModel):
 
     guid: Optional[str] = None
     scenario_guid: Optional[str] = None
+    loss_ratio: Optional[float] = None
+    current_loss_ratio: Optional[float] = None
     rate_increase: Optional[float] = None
-    salary_increase: Optional[float] = None
-    months: Optional[int] = None
+    rate_method: Optional[RateMethod] = None
+    net_hsa: Optional[bool] = None
+    hsa_method: Optional[str] = None  # "gross", "net", or "separate"
+    derived_loss_ratio: Optional[float] = None
+    claims_auto_calc_mode: Optional[bool] = None
 
 
 class RatePlanTierNameData(PlanVantageModel):
