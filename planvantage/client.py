@@ -34,7 +34,7 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
-from planvantage.resources.census import CensusResource, ScenarioCensusResource
+from planvantage.resources.census import CensusResource, MigrationResource, ScenarioCensusResource
 from planvantage.resources.export import ExportResource
 from planvantage.resources.exhibits import ExhibitsResource, ExhibitSettingsResource
 from planvantage.resources.summary import SummarySettingsResource, FixedCostsResource
@@ -122,6 +122,7 @@ class PlanVantageClient:
         self._tier_names: Optional[RatePlanTierNamesResource] = None
         self._census: Optional[CensusResource] = None
         self._scenario_census: Optional[ScenarioCensusResource] = None
+        self._migration: Optional[MigrationResource] = None
         self._export: Optional[ExportResource] = None
         self._exhibits: Optional[ExhibitsResource] = None
         self._exhibit_settings: Optional[ExhibitSettingsResource] = None
@@ -360,6 +361,18 @@ class PlanVantageClient:
         if self._scenario_census is None:
             self._scenario_census = ScenarioCensusResource(self._http)
         return self._scenario_census
+
+    @property
+    def migration(self) -> MigrationResource:
+        """Access enrollment migration resource.
+
+        Example:
+            >>> preview = client.migration.preview("sc_abc123")
+            >>> stored = client.migration.get_stored("sc_abc123")
+        """
+        if self._migration is None:
+            self._migration = MigrationResource(self._http)
+        return self._migration
 
     @property
     def export(self) -> ExportResource:

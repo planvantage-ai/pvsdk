@@ -76,6 +76,8 @@ from planvantage.models.plandocument import (
 )
 from planvantage.models.user import LimitedUserInput
 from planvantage.models.census import (
+    AmbiguousColumnCandidate,
+    AmbiguousColumnsInfo,
     ApplyCensusEnrollmentResult,
     CensusData,
     CensusInfo,
@@ -87,9 +89,13 @@ from planvantage.models.census import (
     CensusTemplateConfig,
     CensusTierMapping,
     CensusUploadResult,
+    EnrollmentSummary,
     MigrationChange,
     MigrationEstimation,
+    MigrationPreviewResponse,
+    PlanEnrollmentPreview,
     ScenarioCensusInfo,
+    StoredMigrationResponse,
 )
 from planvantage.models.exhibit import (
     ContributionOptionInfo,
@@ -210,8 +216,14 @@ __all__ = [
     "CensusTemplateConfig",
     "CensusUploadResult",
     "ScenarioCensusInfo",
+    "AmbiguousColumnCandidate",
+    "AmbiguousColumnsInfo",
     "MigrationChange",
     "MigrationEstimation",
+    "PlanEnrollmentPreview",
+    "EnrollmentSummary",
+    "MigrationPreviewResponse",
+    "StoredMigrationResponse",
     "ApplyCensusEnrollmentResult",
     # Exhibit
     "ExhibitInfo",

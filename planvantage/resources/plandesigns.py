@@ -92,19 +92,35 @@ class PlanDesignsResource(BaseResource):
         """
         self._http.delete(f"/plandesign/{guid}")
 
-    def clone(self, guid: str) -> PlanDesignData:
+    def clone(
+        self,
+        guid: str,
+        name: Optional[str] = None,
+        color: Optional[str] = None,
+        section: Optional[str] = None,
+    ) -> PlanDesignData:
         """Clone a plan design.
 
         Args:
             guid: The plan design's unique identifier.
+            name: Optional name for the cloned plan design.
+            color: Optional display color for the clone.
+            section: Auto-create rate plans in this section ("current", "proposed", "both", or "").
 
         Returns:
             The cloned plan design data.
 
         Example:
-            >>> cloned = client.plandesigns.clone("pd_abc123")
+            >>> cloned = client.plandesigns.clone("pd_abc123", section="proposed")
         """
-        data = self._http.post(f"/plandesign/{guid}/clone")
+        body: dict[str, Any] = {}
+        if name is not None:
+            body["name"] = name
+        if color is not None:
+            body["color"] = color
+        if section is not None:
+            body["section"] = section
+        data = self._http.post(f"/plandesign/{guid}/clone", json=body if body else None)
         return PlanDesignData.model_validate(data)
 
     def copy_to_scenario(

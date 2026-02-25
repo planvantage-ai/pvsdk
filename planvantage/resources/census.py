@@ -11,7 +11,9 @@ from planvantage.models.census import (
     CensusMappingConfig,
     CensusUploadResult,
     MigrationEstimation,
+    MigrationPreviewResponse,
     ScenarioCensusInfo,
+    StoredMigrationResponse,
 )
 from planvantage.resources.base import BaseResource
 
@@ -236,6 +238,34 @@ class CensusResource(BaseResource):
         data = self._http.post(f"/census/{guid}/mapping/recalculate")
         return CensusMappingConfig.model_validate(data)
 
+    def disambiguate(
+        self,
+        guid: str,
+        plan_column_index: int,
+        tier_column_index: int,
+    ) -> CensusUploadResult:
+        """Resolve ambiguous plan/tier columns after an ambiguous census upload.
+
+        Args:
+            guid: The census GUID.
+            plan_column_index: Confirmed column index for plan names.
+            tier_column_index: Confirmed column index for tier names.
+
+        Returns:
+            Upload result after re-parsing with confirmed columns.
+
+        Example:
+            >>> result = client.census.disambiguate("census_abc", 2, 4)
+        """
+        response = self._http.post(
+            f"/census/{guid}/disambiguate",
+            json={
+                "plan_column_index": plan_column_index,
+                "tier_column_index": tier_column_index,
+            },
+        )
+        return CensusUploadResult.model_validate(response)
+
     def list_for_plan_sponsor(self, plan_sponsor_guid: str) -> list[CensusInfo]:
         """List all censuses for a plan sponsor.
 
@@ -343,17 +373,21 @@ class ScenarioCensusResource(BaseResource):
         self,
         scenario_guid: str,
         migration_instructions: Optional[str] = None,
-    ) -> MigrationEstimation:
-        """Preview migration estimation from current to proposed plans.
+        allow_participation_change: bool = False,
+    ) -> MigrationPreviewResponse:
+        """Preview census-based migration estimation from current to proposed plans.
 
         Uses AI to estimate how employees would migrate based on plan changes.
+        May return a 202 status if the LLM call takes longer than 25s; poll
+        get_preview_migration_status to check.
 
         Args:
             scenario_guid: The scenario's GUID.
             migration_instructions: Optional instructions to guide the AI estimation.
+            allow_participation_change: Allow total enrollment to change during migration.
 
         Returns:
-            Migration estimation with proposed enrollment counts.
+            Migration preview with current and proposed enrollment summaries.
 
         Example:
             >>> preview = client.scenario_census.preview_migration(
@@ -361,15 +395,31 @@ class ScenarioCensusResource(BaseResource):
             ...     migration_instructions="Assume 20% move to lower cost plans"
             ... )
         """
-        body = {}
+        body: dict[str, Any] = {}
         if migration_instructions:
             body["migration_instructions"] = migration_instructions
+        if allow_participation_change:
+            body["allow_participation_change"] = True
 
         data = self._http.post(
             f"/scenario/{scenario_guid}/census/preview-migration",
             json=body if body else None,
         )
-        return MigrationEstimation.model_validate(data)
+        return MigrationPreviewResponse.model_validate(data)
+
+    def get_preview_migration_status(
+        self,
+        scenario_guid: str,
+    ) -> dict[str, Any]:
+        """Poll the status of a census migration preview job.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+
+        Returns:
+            Either the migration preview result or a status dict.
+        """
+        return self._http.get(f"/scenario/{scenario_guid}/census/preview-migration")
 
     def update_mapping(
         self,
@@ -408,3 +458,108 @@ class ScenarioCensusResource(BaseResource):
             json=body,
         )
         return ScenarioCensusInfo.model_validate(data)
+
+
+class MigrationResource(BaseResource):
+    """Resource for managing enrollment migration previews and results."""
+
+    def get_stored(self, scenario_guid: str) -> Optional[StoredMigrationResponse]:
+        """Get stored migration result for a scenario.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+
+        Returns:
+            Stored migration result, or None if none exists.
+
+        Example:
+            >>> result = client.migration.get_stored("sc_abc123")
+        """
+        try:
+            data = self._http.get(f"/scenario/{scenario_guid}/migration")
+            return StoredMigrationResponse.model_validate(data)
+        except Exception:
+            return None
+
+    def preview(
+        self,
+        scenario_guid: str,
+        migration_instructions: Optional[str] = None,
+        allow_participation_change: bool = False,
+        use_census: bool = False,
+    ) -> MigrationPreviewResponse:
+        """Preview enrollment migration from current to proposed plans.
+
+        Uses rate plan tier enrollment by default. Set use_census=True to
+        use census enrollment instead. May return partial data if the LLM
+        call is still processing (202 status); poll get_status to check.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+            migration_instructions: Instructions to guide the AI estimation.
+            allow_participation_change: Allow total enrollment to change.
+            use_census: Use census enrollment instead of rate plan tier enrollment.
+
+        Returns:
+            Migration preview with current and proposed enrollment summaries.
+
+        Example:
+            >>> preview = client.migration.preview("sc_abc123")
+        """
+        body: dict[str, Any] = {}
+        if migration_instructions:
+            body["migration_instructions"] = migration_instructions
+        if allow_participation_change:
+            body["allow_participation_change"] = True
+        if use_census:
+            body["use_census"] = True
+
+        data = self._http.post(
+            f"/scenario/{scenario_guid}/migration/preview",
+            json=body if body else None,
+        )
+        return MigrationPreviewResponse.model_validate(data)
+
+    def get_status(self, scenario_guid: str) -> dict[str, Any]:
+        """Poll migration preview job status.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+
+        Returns:
+            Either the migration preview result or a status dict.
+        """
+        return self._http.get(f"/scenario/{scenario_guid}/migration/status")
+
+    def apply(
+        self,
+        scenario_guid: str,
+        proposed_enrollment: dict[str, dict[str, int]],
+    ) -> dict[str, Any]:
+        """Apply migration enrollment to proposed rate plan tiers.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+            proposed_enrollment: Enrollment by plan GUID and tier name.
+
+        Returns:
+            Status result.
+
+        Example:
+            >>> client.migration.apply("sc_abc123", {"rp_guid": {"EE": 100, "FAM": 50}})
+        """
+        return self._http.post(
+            f"/scenario/{scenario_guid}/migration/apply",
+            json={"proposed_enrollment": proposed_enrollment},
+        )
+
+    def delete(self, scenario_guid: str) -> None:
+        """Delete stored migration result.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+
+        Example:
+            >>> client.migration.delete("sc_abc123")
+        """
+        self._http.delete(f"/scenario/{scenario_guid}/migration")

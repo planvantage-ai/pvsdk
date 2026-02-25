@@ -40,3 +40,4 @@ class PlanDocumentInput(PlanVantageModel):
 
     plan_sponsor_guid: str
     filename: Optional[str] = None
+    user_input: Optional[str] = None

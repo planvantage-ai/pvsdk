@@ -33,6 +33,7 @@ class PlanDocumentsResource(BaseResource):
         plan_sponsor_guid: str,
         file: BinaryIO,
         filename: Optional[str] = None,
+        user_input: Optional[str] = None,
     ) -> PlanDocumentInfo:
         """Upload a plan document.
 
@@ -40,6 +41,7 @@ class PlanDocumentsResource(BaseResource):
             plan_sponsor_guid: The plan sponsor's GUID.
             file: File-like object to upload.
             filename: Optional filename override.
+            user_input: Optional instructions for AI processing.
 
         Returns:
             Created document info.
@@ -49,13 +51,18 @@ class PlanDocumentsResource(BaseResource):
             ...     doc = client.plandocuments.upload(
             ...         plan_sponsor_guid="ps_abc123",
             ...         file=f,
-            ...         filename="Plan Summary 2024.pdf"
+            ...         filename="Plan Summary 2024.pdf",
+            ...         user_input="Focus on medical plans only"
             ...     )
         """
         files = {"file": (filename or "document", file)}
+        data_fields: dict[str, str] = {}
+        if user_input:
+            data_fields["userInput"] = user_input
         data = self._http.post(
             f"/plansponsor/{plan_sponsor_guid}/plandocument",
             files=files,
+            data=data_fields if data_fields else None,
         )
         return PlanDocumentInfo.model_validate(data)
 

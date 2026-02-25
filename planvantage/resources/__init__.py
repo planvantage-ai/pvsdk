@@ -27,7 +27,7 @@ from planvantage.resources.settings import (
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
 )
-from planvantage.resources.census import CensusResource, ScenarioCensusResource
+from planvantage.resources.census import CensusResource, MigrationResource, ScenarioCensusResource
 from planvantage.resources.export import ExportResource
 from planvantage.resources.exhibits import ExhibitsResource, ExhibitSettingsResource
 from planvantage.resources.summary import SummarySettingsResource, FixedCostsResource
@@ -60,6 +60,7 @@ __all__ = [
     "RatePlanTierNamesResource",
     "CensusResource",
     "ScenarioCensusResource",
+    "MigrationResource",
     "ExportResource",
     "ExhibitsResource",
     "ExhibitSettingsResource",

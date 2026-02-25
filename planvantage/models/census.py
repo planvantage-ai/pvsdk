@@ -111,16 +111,34 @@ class CensusData(BaseModel):
     updated_at: datetime
 
 
+class AmbiguousColumnCandidate(BaseModel):
+    """A candidate column for plan or tier disambiguation."""
+
+    column_index: int
+    header_name: str
+    score: int
+    sample_values: list[str] = Field(default_factory=list)
+
+
+class AmbiguousColumnsInfo(BaseModel):
+    """Info about ambiguous Plan/Tier column candidates."""
+
+    plan_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
+    tier_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
+
+
 class CensusUploadResult(BaseModel):
     """Result of census upload operation."""
 
     success: bool
     census_guid: str
-    row_count: int
+    row_count: int = 0
     plans_found: list[str] = Field(default_factory=list)
     tiers_found: list[str] = Field(default_factory=list)
     errors: list[dict[str, Any]] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    needs_disambiguation: bool = False
+    ambiguous_columns: Optional[AmbiguousColumnsInfo] = None
 
 
 class ScenarioCensusInfo(BaseModel):
@@ -165,6 +183,44 @@ class ApplyCensusEnrollmentResult(BaseModel):
     enrollment_by_plan: dict[str, int] = Field(default_factory=dict)
     enrollment_by_tier: dict[str, int] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
+
+
+class PlanEnrollmentPreview(BaseModel):
+    """Enrollment preview for a single plan."""
+
+    guid: str
+    name: str
+    enrollment: dict[str, int] = Field(default_factory=dict)
+    total: int = 0
+
+
+class EnrollmentSummary(BaseModel):
+    """Enrollment summary with plans and total."""
+
+    plans: list[PlanEnrollmentPreview] = Field(default_factory=list)
+    total: int = 0
+
+
+class MigrationPreviewResponse(BaseModel):
+    """Response from migration preview endpoints."""
+
+    current_enrollment: Optional[EnrollmentSummary] = None
+    proposed_enrollment: Optional[EnrollmentSummary] = None
+    participation_change: int = 0
+    analysis: Optional[dict[str, Any]] = None
+    reasoning: Optional[list[dict[str, Any]]] = None
+
+
+class StoredMigrationResponse(BaseModel):
+    """Stored migration result with staleness info."""
+
+    result: Optional[MigrationPreviewResponse] = None
+    stale: bool = False
+    instructions: str = ""
+    allow_participation_change: bool = False
+    source: str = ""
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class CensusTemplateConfig(BaseModel):
