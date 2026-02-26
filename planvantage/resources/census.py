@@ -266,6 +266,53 @@ class CensusResource(BaseResource):
         )
         return CensusUploadResult.model_validate(response)
 
+    def get_columns(self, guid: str) -> dict[str, Any]:
+        """Get census column metadata.
+
+        Returns column names, data types, unique values, null counts, and
+        configured null default strategies.
+
+        Args:
+            guid: The census GUID.
+
+        Returns:
+            Dict with a "columns" key mapping column names to metadata.
+
+        Example:
+            >>> meta = client.census.get_columns("census_abc123")
+            >>> for name, col in meta["columns"].items():
+            ...     print(name, col["data_type"], col["null_count"])
+        """
+        return self._http.get(f"/census/{guid}/columns")
+
+    def update_column_null_default(
+        self,
+        guid: str,
+        column_name: str,
+        strategy: str,
+        value: Any = None,
+    ) -> dict[str, Any]:
+        """Update null default strategy for a census column.
+
+        Args:
+            guid: The census GUID.
+            column_name: Name of the column to configure.
+            strategy: Null handling strategy ("none", "value", "average", "median", "mode").
+            value: Default value when strategy is "value".
+
+        Returns:
+            Updated column default info.
+
+        Example:
+            >>> client.census.update_column_null_default(
+            ...     "census_abc123", "age", strategy="average"
+            ... )
+        """
+        body: dict[str, Any] = {"strategy": strategy}
+        if value is not None:
+            body["value"] = value
+        return self._http.patch(f"/census/{guid}/columns/{column_name}/defaults", json=body)
+
     def list_for_plan_sponsor(self, plan_sponsor_guid: str) -> list[CensusInfo]:
         """List all censuses for a plan sponsor.
 
@@ -552,6 +599,23 @@ class MigrationResource(BaseResource):
             f"/scenario/{scenario_guid}/migration/apply",
             json={"proposed_enrollment": proposed_enrollment},
         )
+
+    def dismiss_staleness(self, scenario_guid: str) -> dict[str, Any]:
+        """Dismiss migration staleness warning.
+
+        Updates the stored migration result's state hash to the current hash,
+        acknowledging that scenario data has changed without re-running the estimation.
+
+        Args:
+            scenario_guid: The scenario's GUID.
+
+        Returns:
+            Status result.
+
+        Example:
+            >>> client.migration.dismiss_staleness("sc_abc123")
+        """
+        return self._http.patch(f"/scenario/{scenario_guid}/migration")
 
     def delete(self, scenario_guid: str) -> None:
         """Delete stored migration result.

@@ -33,6 +33,7 @@ from planvantage.resources.settings import (
     RateModelSettingsResource,
     RateModelAssumptionsResource,
     RatePlanTierNamesResource,
+    TierNameSetsResource,
 )
 from planvantage.resources.census import CensusResource, MigrationResource, ScenarioCensusResource
 from planvantage.resources.export import ExportResource
@@ -120,6 +121,7 @@ class PlanVantageClient:
         self._rate_model_settings: Optional[RateModelSettingsResource] = None
         self._rate_model_assumptions: Optional[RateModelAssumptionsResource] = None
         self._tier_names: Optional[RatePlanTierNamesResource] = None
+        self._tier_name_sets: Optional[TierNameSetsResource] = None
         self._census: Optional[CensusResource] = None
         self._scenario_census: Optional[ScenarioCensusResource] = None
         self._migration: Optional[MigrationResource] = None
@@ -335,6 +337,17 @@ class PlanVantageClient:
         if self._tier_names is None:
             self._tier_names = RatePlanTierNamesResource(self._http)
         return self._tier_names
+
+    @property
+    def tier_name_sets(self) -> TierNameSetsResource:
+        """Access tier name sets resource.
+
+        Example:
+            >>> sets = client.tier_name_sets.list()
+        """
+        if self._tier_name_sets is None:
+            self._tier_name_sets = TierNameSetsResource(self._http)
+        return self._tier_name_sets
 
     @property
     def census(self) -> CensusResource:

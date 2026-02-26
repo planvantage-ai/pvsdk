@@ -3,7 +3,6 @@
 from typing import Any, Optional
 
 from planvantage.models.plandesign import (
-    CopyPlanDesignRequest,
     PlanDesignData,
     PlanDesignTierData,
     PlanDesignUtilizationData,
@@ -121,45 +120,6 @@ class PlanDesignsResource(BaseResource):
         if section is not None:
             body["section"] = section
         data = self._http.post(f"/plandesign/{guid}/clone", json=body if body else None)
-        return PlanDesignData.model_validate(data)
-
-    def copy_to_scenario(
-        self,
-        guid: str,
-        target_scenario_guid: str,
-    ) -> PlanDesignData:
-        """Copy a plan design to another scenario.
-
-        Args:
-            guid: The plan design's unique identifier.
-            target_scenario_guid: The destination scenario's GUID.
-
-        Returns:
-            The copied plan design data.
-
-        Example:
-            >>> copied = client.plandesigns.copy_to_scenario("pd_abc", "sc_xyz")
-        """
-        data = self._http.post(
-            f"/scenario/{target_scenario_guid}/plandesign/copy",
-            json={"source_plan_design_guid": guid},
-        )
-        return PlanDesignData.model_validate(data)
-
-    def calculate_av(self, guid: str) -> PlanDesignData:
-        """Calculate actuarial value for a plan design.
-
-        Args:
-            guid: The plan design's unique identifier.
-
-        Returns:
-            Updated plan design data with AV results.
-
-        Example:
-            >>> plan = client.plandesigns.calculate_av("pd_abc123")
-            >>> print(plan.plan_av_result.av)
-        """
-        data = self._http.post(f"/plandesign/{guid}/calculate")
         return PlanDesignData.model_validate(data)
 
     def update_utilization(

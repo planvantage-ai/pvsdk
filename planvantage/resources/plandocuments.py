@@ -56,13 +56,13 @@ class PlanDocumentsResource(BaseResource):
             ...     )
         """
         files = {"file": (filename or "document", file)}
-        data_fields: dict[str, str] = {}
+        data_fields: dict[str, str] = {"planSponsorGuid": plan_sponsor_guid}
         if user_input:
             data_fields["userInput"] = user_input
         data = self._http.post(
-            f"/plansponsor/{plan_sponsor_guid}/plandocument",
+            "/plandocument",
             files=files,
-            data=data_fields if data_fields else None,
+            data=data_fields,
         )
         return PlanDocumentInfo.model_validate(data)
 
@@ -93,8 +93,8 @@ class PlanDocumentsResource(BaseResource):
         """
         return self._http.get(f"/plandocument/{guid}/download")
 
-    def view(self, guid: str) -> bytes:
-        """Get document for inline viewing.
+    def preview(self, guid: str) -> bytes:
+        """Get document for inline viewing/preview.
 
         Args:
             guid: The document's unique identifier.
@@ -102,7 +102,7 @@ class PlanDocumentsResource(BaseResource):
         Returns:
             File contents as bytes.
         """
-        return self._http.get(f"/plandocument/{guid}/view")
+        return self._http.get(f"/plandocument/{guid}/preview")
 
     def reprocess(self, guid: str) -> None:
         """Reprocess document extraction.
@@ -114,3 +114,95 @@ class PlanDocumentsResource(BaseResource):
             >>> client.plandocuments.reprocess("doc_abc123")
         """
         self._http.post(f"/plandocument/{guid}/reprocess")
+
+    def cancel(self, guid: str) -> None:
+        """Cancel document processing.
+
+        Args:
+            guid: The document's unique identifier.
+
+        Example:
+            >>> client.plandocuments.cancel("doc_abc123")
+        """
+        self._http.post(f"/plandocument/{guid}/cancel")
+
+    def rename(self, guid: str, filename: str) -> None:
+        """Rename a plan document.
+
+        Args:
+            guid: The document's unique identifier.
+            filename: New filename.
+
+        Example:
+            >>> client.plandocuments.rename("doc_abc123", "Updated Plan.pdf")
+        """
+        self._http.post(f"/plandocument/{guid}/rename", json={"fileName": filename})
+
+    def extract_plan_designs(
+        self,
+        guid: str,
+        user_input: Optional[str] = None,
+    ) -> None:
+        """Extract plan designs from the document.
+
+        Args:
+            guid: The document's unique identifier.
+            user_input: Optional instructions for AI extraction.
+
+        Example:
+            >>> client.plandocuments.extract_plan_designs("doc_abc123")
+        """
+        body: dict[str, str] = {}
+        if user_input:
+            body["userInput"] = user_input
+        self._http.post(f"/plandocument/{guid}/extractplandesigns", json=body if body else None)
+
+    def extract_rates(
+        self,
+        guid: str,
+        user_input: Optional[str] = None,
+    ) -> None:
+        """Extract rates from the document.
+
+        Args:
+            guid: The document's unique identifier.
+            user_input: Optional instructions for AI extraction.
+
+        Example:
+            >>> client.plandocuments.extract_rates("doc_abc123")
+        """
+        body: dict[str, str] = {}
+        if user_input:
+            body["userInput"] = user_input
+        self._http.post(f"/plandocument/{guid}/extractrates", json=body if body else None)
+
+    def extract_contributions(
+        self,
+        guid: str,
+        user_input: Optional[str] = None,
+    ) -> None:
+        """Extract contributions from the document.
+
+        Args:
+            guid: The document's unique identifier.
+            user_input: Optional instructions for AI extraction.
+
+        Example:
+            >>> client.plandocuments.extract_contributions("doc_abc123")
+        """
+        body: dict[str, str] = {}
+        if user_input:
+            body["userInput"] = user_input
+        self._http.post(f"/plandocument/{guid}/extractcontributions", json=body if body else None)
+
+    def delete_extracted_data(self, guid: str, data_type: str) -> None:
+        """Delete extracted data of a specific type from a document.
+
+        Args:
+            guid: The document's unique identifier.
+            data_type: Type of data to delete ("planDesigns", "rates", or "contributions").
+
+        Example:
+            >>> client.plandocuments.delete_extracted_data("doc_abc123", "rates")
+        """
+        self._http.post(f"/plandocument/{guid}/{data_type}/delete")

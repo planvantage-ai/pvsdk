@@ -7,6 +7,7 @@ from planvantage.models.rateplan import (
     RateModelAssumptionsData,
     RateModelSettingsData,
     RatePlanTierNameData,
+    TierNameSetData,
 )
 from planvantage.resources.base import BaseResource
 
@@ -125,4 +126,24 @@ class RatePlanTierNamesResource(BaseResource):
         data = self._http.get("/rateplantiernames")
         if isinstance(data, list):
             return [RatePlanTierNameData.model_validate(item) for item in data]
+        return []
+
+
+class TierNameSetsResource(BaseResource):
+    """Resource for accessing tier name set definitions."""
+
+    def list(self) -> list[TierNameSetData]:
+        """Get all available tier name sets.
+
+        Returns:
+            List of tier name set definitions with their tier configurations.
+
+        Example:
+            >>> sets = client.tier_name_sets.list()
+            >>> for s in sets:
+            ...     print(s.id, s.size)
+        """
+        data = self._http.get("/tiernamesets")
+        if isinstance(data, list):
+            return [TierNameSetData.model_validate(item) for item in data]
         return []

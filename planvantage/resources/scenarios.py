@@ -150,7 +150,7 @@ class ScenariosResource(BaseResource):
             >>> client.scenarios.undo("sc_abc123", "plandesign")
         """
         request = ScenarioHistoryInput(scenario_guid=guid, model_type=model_type)
-        return self._http.post("/scenariohistory/undo", json=self._serialize(request))
+        return self._http.post("/scenariosnapshot/undo", json=self._serialize(request))
 
     def redo(self, guid: str, model_type: str) -> Any:
         """Redo a previously undone change.
@@ -166,7 +166,7 @@ class ScenariosResource(BaseResource):
             >>> client.scenarios.redo("sc_abc123", "plandesign")
         """
         request = ScenarioHistoryInput(scenario_guid=guid, model_type=model_type)
-        return self._http.post("/scenariohistory/redo", json=self._serialize(request))
+        return self._http.post("/scenariosnapshot/redo", json=self._serialize(request))
 
     def sync_enrollment(
         self,
@@ -386,3 +386,102 @@ class ScenariosResource(BaseResource):
             >>> client.scenarios.reset_tier_ratios_maintain_base_rate("sc_abc123")
         """
         self._http.post(f"/scenario/{guid}/resettierratios/maintainbaserate")
+
+    def import_plan_designs_from_guids(
+        self,
+        guid: str,
+        plan_design_guids: list[str],
+        section: str = "both",
+    ) -> Any:
+        """Import plan designs into a scenario by their GUIDs.
+
+        Args:
+            guid: The target scenario's unique identifier.
+            plan_design_guids: List of plan design GUIDs to import.
+            section: Where to create rate plans ("current", "proposed", "both", "none").
+
+        Returns:
+            Import result with message.
+
+        Example:
+            >>> client.scenarios.import_plan_designs_from_guids(
+            ...     "sc_abc123", ["pd_1", "pd_2"], section="proposed"
+            ... )
+        """
+        path = f"/scenario/{guid}/importplandesignsfromguids"
+        if section != "both":
+            path += f"?section={section}"
+        return self._http.post(path, json=plan_design_guids)
+
+    def import_plan_designs(
+        self,
+        guid: str,
+        plan_designs: list[dict[str, Any]],
+        section: str = "both",
+    ) -> Any:
+        """Import plan designs extracted from a document into a scenario.
+
+        Args:
+            guid: The target scenario's unique identifier.
+            plan_designs: List of plan design data dicts (from document extraction).
+            section: Where to create rate plans ("current", "proposed", "both", "none").
+
+        Returns:
+            Import result with message and count.
+
+        Example:
+            >>> doc = client.plandocuments.get("doc_abc123")
+            >>> client.scenarios.import_plan_designs(
+            ...     "sc_abc123", doc.extracted_data["planDesigns"]
+            ... )
+        """
+        path = f"/scenario/{guid}/importplandesigns"
+        if section != "both":
+            path += f"?section={section}"
+        return self._http.post(path, json=plan_designs)
+
+    def import_current_rates(
+        self,
+        guid: str,
+        rate_plans: list[dict[str, Any]],
+    ) -> Any:
+        """Import current rate plans extracted from a document into a scenario.
+
+        Args:
+            guid: The target scenario's unique identifier.
+            rate_plans: List of rate plan data dicts (from document extraction).
+
+        Returns:
+            Import result with message and count.
+
+        Example:
+            >>> doc = client.plandocuments.get("doc_abc123")
+            >>> client.scenarios.import_current_rates(
+            ...     "sc_abc123", doc.extracted_data["ratePlans"]
+            ... )
+        """
+        return self._http.post(f"/scenario/{guid}/importcurrentrates", json=rate_plans)
+
+    def import_current_contributions(
+        self,
+        guid: str,
+        contribution_groups: list[dict[str, Any]],
+    ) -> Any:
+        """Import current contribution groups extracted from a document into a scenario.
+
+        Args:
+            guid: The target scenario's unique identifier.
+            contribution_groups: List of contribution group data dicts.
+
+        Returns:
+            Import result with message and count.
+
+        Example:
+            >>> doc = client.plandocuments.get("doc_abc123")
+            >>> client.scenarios.import_current_contributions(
+            ...     "sc_abc123", doc.extracted_data["contributionGroups"]
+            ... )
+        """
+        return self._http.post(
+            f"/scenario/{guid}/importcurrentcontributions", json=contribution_groups
+        )
