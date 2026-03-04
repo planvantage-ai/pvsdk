@@ -94,6 +94,7 @@ class FixedCostLineItemData(PlanVantageModel):
     proposed_value: Optional[float] = None
     is_auto_calc: Optional[bool] = None
     current_pepm: Optional[float] = None
+    status_quo_pepm: Optional[float] = None
     proposed_pepm: Optional[float] = None
     pepm_calc_active: Optional[bool] = None
 
@@ -108,6 +109,7 @@ class FixedCostLineItemInput(PlanVantageModel):
     proposed_value: Optional[float] = None
     is_auto_calc: Optional[bool] = None
     current_pepm: Optional[float] = None
+    status_quo_pepm: Optional[float] = None
     proposed_pepm: Optional[float] = None
     pepm_calc_active: Optional[bool] = None
 
