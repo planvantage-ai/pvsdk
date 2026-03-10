@@ -108,11 +108,21 @@ class RateModelSettingsData(PlanVantageModel):
 
     guid: Optional[str] = None
     scenario_guid: Optional[str] = None
+    show_actuarial_values: Optional[bool] = None
+    show_relative_values: Optional[bool] = None
+    show_plan_spread: Optional[bool] = None
     show_tier_ratios: Optional[bool] = None
-    show_current_tier_enrollment: Optional[bool] = None
-    show_proposed_tier_enrollment: Optional[bool] = None
-    show_current_adjustments: Optional[bool] = None
-    show_proposed_adjustments: Optional[bool] = None
+    show_adult_lives: Optional[bool] = None
+    show_hsa: Optional[bool] = None
+    show_rates_without_hsa: Optional[bool] = None
+    show_employer_subsidy_pct: Optional[bool] = None
+    show_employee_contribution_pct: Optional[bool] = None
+    show_legend: Optional[bool] = None
+    show_tier_validation: Optional[bool] = None
+    show_plan_annual_totals: Optional[bool] = None
+    show_group_totals: Optional[bool] = None
+    sync_enrollment_with_rate_model: Optional[bool] = None
+    use_rate_override: Optional[bool] = None
 
 
 class RateModelAssumptionsData(PlanVantageModel):
