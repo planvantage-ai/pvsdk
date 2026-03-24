@@ -274,6 +274,24 @@ class ProposedContributionOptionsResource(BaseResource):
         """
         self._http.post(f"/proposedcontributionoption/{guid}/copyoptionenrollment")
 
+    def copy_plan_contributions(
+        self,
+        guid: str,
+        rate_plan_guid: str,
+        direction: str,
+    ) -> None:
+        """Copy contribution values for a rate plan between current and proposed.
+
+        Args:
+            guid: The option's unique identifier.
+            rate_plan_guid: The rate plan whose contributions to copy.
+            direction: Direction to copy ("to_proposed" or "to_current").
+        """
+        self._http.post(
+            f"/proposedcontributionoption/{guid}/copyplancontributions",
+            json={"rate_plan_guid": rate_plan_guid, "direction": direction},
+        )
+
 
 class ProposedContributionGroupsResource(BaseResource):
     """Resource for managing proposed contribution groups."""
