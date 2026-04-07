@@ -91,7 +91,7 @@ class TestExceptions:
         mock_api: respx.MockRouter,
     ) -> None:
         """Test RateLimitError on 429 response."""
-        mock_api.get("/plansponsor").mock(
+        mock_api.get("/plansponsors").mock(
             return_value=Response(
                 429,
                 json={"error": "Rate limit exceeded"},
@@ -111,7 +111,7 @@ class TestExceptions:
         mock_api: respx.MockRouter,
     ) -> None:
         """Test ServerError on 500 response."""
-        mock_api.get("/plansponsor").mock(
+        mock_api.get("/plansponsors").mock(
             return_value=Response(500, json={"error": "Internal server error"})
         )
 

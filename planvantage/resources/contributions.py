@@ -86,13 +86,32 @@ class CurrentContributionGroupsResource(BaseResource):
         """
         self._http.delete(f"/currentcontributiongroup/{guid}/rateplan/{rate_plan_guid}")
 
-    def copy_to_proposed(self, guid: str) -> None:
-        """Copy current contribution setup to proposed options.
+    def copy_to_proposed(
+        self,
+        guid: str,
+        proposed_option_guid: str,
+    ) -> None:
+        """Copy this current contribution group into a proposed contribution option.
+
+        If the proposed option already has a group with the same name, the
+        existing group is overwritten in place rather than duplicated. Census
+        criteria are also copied and enrollment is re-distributed via the
+        criteria matcher.
 
         Args:
-            guid: The group's unique identifier.
+            guid: The current group's unique identifier.
+            proposed_option_guid: The destination proposed contribution
+                option's unique identifier.
+
+        Example:
+            >>> client.current_contribution_groups.copy_to_proposed(
+            ...     "ccg_xyz", proposed_option_guid="pco_target"
+            ... )
         """
-        self._http.post(f"/currentcontributiongroup/{guid}/copy")
+        self._http.post(
+            f"/currentcontributiongroup/{guid}/copy",
+            json={"proposedOptionGuid": proposed_option_guid},
+        )
 
     def move(self, guid: str, direction: str) -> None:
         """Move a current contribution group up or down.
@@ -292,6 +311,47 @@ class ProposedContributionOptionsResource(BaseResource):
             json={"rate_plan_guid": rate_plan_guid, "direction": direction},
         )
 
+    def import_from_scenario(
+        self,
+        target_scenario_guid: str,
+        source_option_guid: str,
+        include_groups: bool = False,
+        sync_with_census: bool = False,
+    ) -> ContributionOptionData:
+        """Import a contribution option from another scenario.
+
+        For manual options whose plan structure differs from the target, the
+        backend will use the LLM to translate contribution amounts into a
+        strategy prompt and mark the new option for recalculation. When the
+        structures match, amounts are copied directly.
+
+        Args:
+            target_scenario_guid: GUID of the scenario to import into.
+            source_option_guid: GUID of the contribution option to copy.
+            include_groups: Also copy the source option's groups.
+            sync_with_census: After import, sync enrollment with the target
+                scenario's mapped census (no-op if no census is mapped).
+
+        Returns:
+            The newly created contribution option.
+
+        Example:
+            >>> option = client.proposed_contribution_options.import_from_scenario(
+            ...     target_scenario_guid="sc_target",
+            ...     source_option_guid="pco_source",
+            ...     include_groups=True,
+            ... )
+        """
+        data = self._http.post(
+            f"/scenario/{target_scenario_guid}/importcontributionoption",
+            json={
+                "source_option_guid": source_option_guid,
+                "include_groups": include_groups,
+                "sync_with_census": sync_with_census,
+            },
+        )
+        return ContributionOptionData.model_validate(data)
+
 
 class ProposedContributionGroupsResource(BaseResource):
     """Resource for managing proposed contribution groups."""
@@ -382,6 +442,21 @@ class ProposedContributionGroupsResource(BaseResource):
             direction: Direction to move ("up" or "down").
         """
         self._http.post(f"/proposedcontributiongroup/{guid}/move", json={"direction": direction})
+
+    def copy_criteria_from_current(self, guid: str) -> None:
+        """Copy census criteria from the matching current contribution group.
+
+        Looks up the current contribution group with the same name as this
+        proposed group, copies its census criteria onto this group, and
+        re-distributes enrollment by re-running the criteria matcher.
+
+        Args:
+            guid: The proposed group's unique identifier.
+
+        Example:
+            >>> client.proposed_contribution_groups.copy_criteria_from_current("pcg_xyz")
+        """
+        self._http.post(f"/proposedcontributiongroup/{guid}/copycriteriafromcurrent")
 
 
 class ProposedContributionTiersResource(BaseResource):

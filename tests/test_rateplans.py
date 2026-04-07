@@ -32,7 +32,7 @@ class TestCurrentRatePlansResource:
 
         assert isinstance(rate_plan, RatePlanData)
         assert rate_plan.guid == "rp_test123"
-        assert rate_plan.name == "Gold PPO Rates"
+        assert rate_plan.plan_name == "Gold PPO Rates"
 
     def test_create_current_rate_plan(
         self,
@@ -61,16 +61,16 @@ class TestCurrentRatePlansResource:
         """Test updating a current rate plan."""
         updated_data = {
             "guid": "rp_test123",
-            "name": "Updated Rates",
+            "plan_name": "Updated Rates",
         }
         mock_api.patch("/currentrateplan/rp_test123").mock(
             return_value=Response(200, json=updated_data)
         )
 
-        rate_plan = client.current_rate_plans.update("rp_test123", name="Updated Rates")
+        rate_plan = client.current_rate_plans.update("rp_test123", plan_name="Updated Rates")
 
         assert isinstance(rate_plan, RatePlanData)
-        assert rate_plan.name == "Updated Rates"
+        assert rate_plan.plan_name == "Updated Rates"
 
     def test_delete_current_rate_plan(
         self,
@@ -141,13 +141,13 @@ class TestProposedRatePlansResource:
         """Test updating a proposed rate plan."""
         updated_data = {
             "guid": "rp_test123",
-            "rate_increase": 0.05,
+            "plan_color": "#1f77b4",
         }
         mock_api.patch("/proposedrateplan/rp_test123").mock(
             return_value=Response(200, json=updated_data)
         )
 
-        rate_plan = client.proposed_rate_plans.update("rp_test123", rate_increase=0.05)
+        rate_plan = client.proposed_rate_plans.update("rp_test123", plan_color="#1f77b4")
 
         assert isinstance(rate_plan, RatePlanData)
 
@@ -215,7 +215,7 @@ class TestCurrentRatePlanTiersResource:
         tier_data = {
             "guid": "rpt_test123",
             "rate_plan_guid": "rp_test123",
-            "name": "Employee Only",
+            "tier_name": "Employee Only",
             "rate": 450.00,
             "enrollment": 50,
         }
@@ -237,7 +237,7 @@ class TestCurrentRatePlanTiersResource:
         tier_data = {
             "guid": "rpt_test123",
             "rate_plan_guid": "rp_test123",
-            "name": "Employee Only",
+            "tier_name": "Employee Only",
             "rate": 500.00,
         }
         mock_api.post("/currentrateplantier").mock(
@@ -246,12 +246,12 @@ class TestCurrentRatePlanTiersResource:
 
         tier = client.current_rate_plan_tiers.create(
             rate_plan_guid="rp_test123",
-            name="Employee Only",
+            tier_name="Employee Only",
             rate=500.00,
         )
 
         assert isinstance(tier, RatePlanTierData)
-        assert tier.name == "Employee Only"
+        assert tier.tier_name == "Employee Only"
 
     def test_update_tier(
         self,
@@ -296,8 +296,9 @@ class TestProposedRatePlanTiersResource:
         tier_data = {
             "guid": "rpt_test123",
             "rate_plan_guid": "rp_test123",
-            "name": "Employee Only",
+            "tier_name": "Employee Only",
             "rate": 475.00,
+            "rate_override": 480.00,
         }
         mock_api.get("/proposedrateplantier/rpt_test123").mock(
             return_value=Response(200, json=tier_data)
@@ -306,6 +307,7 @@ class TestProposedRatePlanTiersResource:
         tier = client.proposed_rate_plan_tiers.get("rpt_test123")
 
         assert isinstance(tier, RatePlanTierData)
+        assert tier.rate_override == 480.00
 
     def test_create_tier(
         self,
@@ -316,7 +318,7 @@ class TestProposedRatePlanTiersResource:
         tier_data = {
             "guid": "rpt_test123",
             "rate_plan_guid": "rp_test123",
-            "name": "Employee + Family",
+            "tier_name": "Employee + Family",
             "rate": 1200.00,
         }
         mock_api.post("/proposedrateplantier").mock(
@@ -325,7 +327,7 @@ class TestProposedRatePlanTiersResource:
 
         tier = client.proposed_rate_plan_tiers.create(
             rate_plan_guid="rp_test123",
-            name="Employee + Family",
+            tier_name="Employee + Family",
             rate=1200.00,
         )
 
@@ -375,7 +377,7 @@ class TestCurrentRatePlanAdjustmentsResource:
             "guid": "adj_test123",
             "rate_plan_guid": "rp_test123",
             "name": "Admin Fee",
-            "value": 25.00,
+            "adjustment_factor": 1.05,
         }
         mock_api.get("/currentrateplanadjustment/adj_test123").mock(
             return_value=Response(200, json=adj_data)
@@ -385,6 +387,7 @@ class TestCurrentRatePlanAdjustmentsResource:
 
         assert isinstance(adj, RatePlanAdjustmentData)
         assert adj.name == "Admin Fee"
+        assert adj.adjustment_factor == 1.05
 
     def test_create_adjustment(
         self,
@@ -396,8 +399,7 @@ class TestCurrentRatePlanAdjustmentsResource:
             "guid": "adj_test123",
             "rate_plan_guid": "rp_test123",
             "name": "HSA Contribution",
-            "value": 50.00,
-            "is_credit": True,
+            "adjustment_factor": 1.10,
         }
         mock_api.post("/currentrateplanadjustment").mock(
             return_value=Response(201, json=adj_data)
@@ -406,8 +408,7 @@ class TestCurrentRatePlanAdjustmentsResource:
         adj = client.current_rate_plan_adjustments.create(
             rate_plan_guid="rp_test123",
             name="HSA Contribution",
-            value=50.00,
-            is_credit=True,
+            adjustment_factor=1.10,
         )
 
         assert isinstance(adj, RatePlanAdjustmentData)
@@ -420,13 +421,15 @@ class TestCurrentRatePlanAdjustmentsResource:
         """Test updating a current rate plan adjustment."""
         adj_data = {
             "guid": "adj_test123",
-            "value": 30.00,
+            "adjustment_factor": 1.07,
         }
         mock_api.patch("/currentrateplanadjustment/adj_test123").mock(
             return_value=Response(200, json=adj_data)
         )
 
-        adj = client.current_rate_plan_adjustments.update("adj_test123", value=30.00)
+        adj = client.current_rate_plan_adjustments.update(
+            "adj_test123", adjustment_factor=1.07
+        )
 
         assert isinstance(adj, RatePlanAdjustmentData)
 
@@ -456,7 +459,7 @@ class TestProposedRatePlanAdjustmentsResource:
             "guid": "adj_test123",
             "rate_plan_guid": "rp_test123",
             "name": "Wellness Credit",
-            "value": 15.00,
+            "adjustment_factor": 0.97,
         }
         mock_api.get("/proposedrateplanadjustment/adj_test123").mock(
             return_value=Response(200, json=adj_data)
@@ -476,7 +479,7 @@ class TestProposedRatePlanAdjustmentsResource:
             "guid": "adj_test123",
             "rate_plan_guid": "rp_test123",
             "name": "Wellness Credit",
-            "value": 15.00,
+            "adjustment_factor": 0.97,
         }
         mock_api.post("/proposedrateplanadjustment").mock(
             return_value=Response(201, json=adj_data)
@@ -485,7 +488,7 @@ class TestProposedRatePlanAdjustmentsResource:
         adj = client.proposed_rate_plan_adjustments.create(
             rate_plan_guid="rp_test123",
             name="Wellness Credit",
-            value=15.00,
+            adjustment_factor=0.97,
         )
 
         assert isinstance(adj, RatePlanAdjustmentData)
@@ -498,13 +501,15 @@ class TestProposedRatePlanAdjustmentsResource:
         """Test updating a proposed rate plan adjustment."""
         adj_data = {
             "guid": "adj_test123",
-            "is_taxable": False,
+            "adjustment_factor": 0.95,
         }
         mock_api.patch("/proposedrateplanadjustment/adj_test123").mock(
             return_value=Response(200, json=adj_data)
         )
 
-        adj = client.proposed_rate_plan_adjustments.update("adj_test123", is_taxable=False)
+        adj = client.proposed_rate_plan_adjustments.update(
+            "adj_test123", adjustment_factor=0.95
+        )
 
         assert isinstance(adj, RatePlanAdjustmentData)
 

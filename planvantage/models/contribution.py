@@ -6,40 +6,58 @@ from typing import Any, Optional
 from planvantage.models.base import PlanVantageModel
 
 
+class CensusFilterRule(PlanVantageModel):
+    """A single criterion used to match census rows to a contribution group."""
+
+    column: Optional[str] = None
+    operator: Optional[str] = None  # "equals", "in", "less_than", "greater_than", "between"
+    value: Optional[Any] = None
+
+
+class ContributionGroupCriteria(PlanVantageModel):
+    """Census criteria attached to a contribution group."""
+
+    rules: Optional[list[CensusFilterRule]] = None
+    rule_mode: Optional[str] = None  # "and" (default) or "or"
+
+
 class ContributionTierData(PlanVantageModel):
-    """Contribution tier data."""
+    """Contribution tier data (shared by current and proposed)."""
 
     guid: Optional[str] = None
-    contribution_plan_guid: Optional[str] = None
     rate_plan_tier_guid: Optional[str] = None
-    name: Optional[str] = None
+    order: Optional[float] = None
+    tier_name: Optional[str] = None
+    hsa_amount: Optional[float] = None
     rate: Optional[float] = None
-    employer_contribution: Optional[float] = None
-    employer_contribution_percent: Optional[float] = None
-    employee_contribution: Optional[float] = None
+    contribution: Optional[float] = None
     enrollment: Optional[int] = None
-    order: Optional[int] = None
 
 
 class ContributionPlanData(PlanVantageModel):
-    """Contribution plan data."""
+    """Contribution plan data (one rate plan inside a contribution group)."""
 
-    guid: Optional[str] = None
     contribution_group_guid: Optional[str] = None
     rate_plan_guid: Optional[str] = None
-    name: Optional[str] = None
+    plan_design_guid: Optional[str] = None
+    plan_name: Optional[str] = None
+    plan_color: Optional[str] = None
+    order: Optional[float] = None
     tiers: Optional[list[ContributionTierData]] = None
-    order: Optional[int] = None
 
 
 class ContributionGroupData(PlanVantageModel):
-    """Contribution group data."""
+    """Contribution group data (shared by current and proposed)."""
 
     guid: Optional[str] = None
-    scenario_guid: Optional[str] = None
+    contribution_option_guid: Optional[str] = None
     name: Optional[str] = None
+    order: Optional[float] = None
     plans: Optional[list[ContributionPlanData]] = None
-    order: Optional[int] = None
+    census_criteria: Optional[ContributionGroupCriteria] = None
+    matched_census_count: Optional[int] = None
+    needs_criteria_reset: Optional[bool] = None
+    enrollment_status: Optional[str] = None  # "match", "overridden", "faulty"
 
 
 class ContributionOptionData(PlanVantageModel):
@@ -48,14 +66,15 @@ class ContributionOptionData(PlanVantageModel):
     guid: Optional[str] = None
     scenario_guid: Optional[str] = None
     name: Optional[str] = None
+    order: Optional[float] = None
     prompt: Optional[str] = None
-    contribution_strategy: Optional[str] = None
-    contribution_value: Optional[float] = None
+    ai_calc_enabled: Optional[bool] = None
+    change_since_prompt: Optional[bool] = None
+    change_since_ignore: Optional[bool] = None
+    processing_status: Optional[str] = None  # pending|processing_groups|processing|success|failed|canceled
+    processing_error: Optional[str] = None
+    comparison_group_guid: Optional[str] = None
     groups: Optional[list[ContributionGroupData]] = None
-    status: Optional[str] = None
-    is_calculating: Optional[bool] = None
-    calc_error: Optional[str] = None
-    order: Optional[int] = None
 
 
 class ContributionTierEnrollmentUpdateData(PlanVantageModel):
@@ -66,51 +85,54 @@ class ContributionTierEnrollmentUpdateData(PlanVantageModel):
 
 
 class ContributionOptionItem(PlanVantageModel):
-    """Contribution option item for import."""
+    """Contribution option library item."""
 
+    key: Optional[str] = None
     name: Optional[str] = None
     prompt: Optional[str] = None
-    contribution_strategy: Optional[str] = None
-    contribution_value: Optional[float] = None
 
 
 class ContributionOptionImportItem(PlanVantageModel):
-    """Item for bulk import of contribution options."""
+    """Item for importing contribution options from another scenario."""
 
     name: Optional[str] = None
     prompt: Optional[str] = None
-    contribution_strategy: Optional[str] = None
-    contribution_value: Optional[float] = None
+    source_option_guid: Optional[str] = None
 
 
 class ScenarioOptionItems(PlanVantageModel):
-    """Scenario options with contribution strategies."""
+    """Contribution options grouped under a scenario in the library view."""
 
-    contribution_strategies: Optional[list[str]] = None
-    prompts: Optional[list[str]] = None
+    scenario_guid: Optional[str] = None
+    scenario_name: Optional[str] = None
+    contribution_options: Optional[list[ContributionOptionItem]] = None
 
 
 class PlanSponsorItems(PlanVantageModel):
-    """Plan sponsor items."""
+    """Plan sponsor library entry containing scenarios with contribution options."""
 
-    prompts: Optional[list[str]] = None
+    plan_sponsor_guid: Optional[str] = None
+    plan_sponsor_name: Optional[str] = None
+    scenarios: Optional[list[ScenarioOptionItems]] = None
 
 
 class ContributionOptionItemsLists(PlanVantageModel):
-    """Container for contribution option items lists."""
+    """Container returned by /proposedcontributionoption/items.
 
-    scenario_items: Optional[ScenarioOptionItems] = None
-    plan_sponsor_items: Optional[PlanSponsorItems] = None
+    ``standard`` holds the built-in option templates; ``library`` holds
+    options reusable from other scenarios in the user's plan sponsors.
+    """
+
+    standard: Optional[list[ContributionOptionItem]] = None
+    library: Optional[list[PlanSponsorItems]] = None
 
 
-class ProposedContributionGroupData(PlanVantageModel):
-    """Proposed contribution group data."""
+# The proposed-side classes share field shapes with the current-side classes.
+# They exist as distinct types so callers can express intent clearly and so
+# any future divergence has a place to land.
 
-    guid: Optional[str] = None
-    contribution_option_guid: Optional[str] = None
-    name: Optional[str] = None
-    plans: Optional[list[ContributionPlanData]] = None
-    order: Optional[float] = None
+ProposedContributionGroupData = ContributionGroupData
+ProposedContributionTierData = ContributionTierData
 
 
 class ProposedContributionGroupInput(PlanVantageModel):
@@ -121,27 +143,12 @@ class ProposedContributionGroupInput(PlanVantageModel):
     order: Optional[float] = None
 
 
-class ProposedContributionTierData(PlanVantageModel):
-    """Proposed contribution tier data."""
-
-    guid: Optional[str] = None
-    contribution_plan_guid: Optional[str] = None
-    rate_plan_tier_guid: Optional[str] = None
-    name: Optional[str] = None
-    rate: Optional[float] = None
-    employer_contribution: Optional[float] = None
-    employer_contribution_percent: Optional[float] = None
-    employee_contribution: Optional[float] = None
-    enrollment: Optional[int] = None
-    order: Optional[int] = None
-
-
 class ProposedContributionTierInput(PlanVantageModel):
     """Input for updating proposed contribution tier."""
 
-    employer_contribution: Optional[float] = None
-    employer_contribution_percent: Optional[float] = None
+    contribution: Optional[float] = None
     enrollment: Optional[int] = None
+    hsa_amount: Optional[float] = None
 
 
 class ProposedContributionTierEnrollmentUpdate(PlanVantageModel):

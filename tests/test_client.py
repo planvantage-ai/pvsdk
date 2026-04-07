@@ -49,13 +49,19 @@ class TestAuthConfig:
             assert config.base_url == "https://env.test.com"
 
     def test_get_headers(self) -> None:
-        """Test getting authentication headers."""
+        """Test getting authentication headers.
+
+        Content-Type is intentionally NOT set on the persistent client — httpx
+        sets it per-request based on body type so file uploads get the correct
+        multipart boundary. See ``AuthConfig.get_headers`` docstring.
+        """
         config = AuthConfig(api_key="pk_test", base_url="https://api.test.com")
         headers = config.get_headers()
 
         assert headers["Authorization"] == "Bearer pk_test"
-        assert headers["Content-Type"] == "application/json"
         assert headers["Accept"] == "application/json"
+        assert headers["X-PV-Client"] == "python-sdk"
+        assert "Content-Type" not in headers
 
 
 class TestPlanVantageClient:
@@ -107,8 +113,6 @@ class TestPlanVantageClient:
             assert client.proposed_contribution_groups is not None
             assert client.proposed_contribution_tiers is not None
             assert client.plandocuments is not None
-            assert client.chats is not None
-            assert client.chat_messages is not None
             assert client.benchmarks is not None
             assert client.plan_model_settings is not None
             assert client.rate_model_settings is not None

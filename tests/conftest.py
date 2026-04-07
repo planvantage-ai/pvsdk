@@ -121,13 +121,14 @@ def sample_rateplan_data() -> dict[str, Any]:
         "guid": "rp_test123",
         "scenario_guid": "sc_test123",
         "plan_design_guid": "pd_test123",
-        "name": "Gold PPO Rates",
-        "rate_method": "tierRates",
+        "plan_name": "Gold PPO Rates",
+        "plan_color": "#1f77b4",
+        "order": 1.0,
         "tiers": [
             {
                 "guid": "rpt_test1",
                 "rate_plan_guid": "rp_test123",
-                "name": "Employee Only",
+                "tier_name": "Employee Only",
                 "rate": 450.00,
                 "enrollment": 50,
             },

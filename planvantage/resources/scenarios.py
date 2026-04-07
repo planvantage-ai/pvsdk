@@ -485,3 +485,63 @@ class ScenariosResource(BaseResource):
         return self._http.post(
             f"/scenario/{guid}/importcurrentcontributions", json=contribution_groups
         )
+
+    def bulk_update(
+        self,
+        guid: str,
+        updates: list[dict[str, Any]],
+    ) -> ScenarioData:
+        """Apply multiple tier updates in a single transaction with one undo snapshot.
+
+        Designed for paste operations and other multi-cell edits where N individual
+        PATCH calls would create N undo entries. The whole batch is wrapped in one
+        DB transaction and produces a single snapshot.
+
+        Each update is a dict with three keys:
+
+        - ``entity_type``: one of
+          ``"proposed_rate_plan_tier"``, ``"current_rate_plan_tier"``,
+          ``"proposed_contribution_tier"``, ``"current_contribution_tier"``
+        - ``guid``: the tier's GUID
+        - ``fields``: a dict of field updates. Allowed fields per entity type:
+
+          - ``proposed_rate_plan_tier``: ``rate_override``, ``enrollment``,
+            ``hsa_amount``, ``tier_ratio``
+          - ``current_rate_plan_tier``: ``rate``, ``enrollment``, ``hsa_amount``,
+            ``tier_ratio``
+          - ``proposed_contribution_tier``: ``contribution``, ``enrollment``,
+            ``hsa_amount``
+          - ``current_contribution_tier``: ``contribution``, ``enrollment``,
+            ``hsa_amount``
+
+        Unknown fields are silently filtered out per the backend allowlist.
+
+        Args:
+            guid: The scenario's unique identifier.
+            updates: List of update dicts as described above.
+
+        Returns:
+            The full updated scenario data.
+
+        Example:
+            >>> client.scenarios.bulk_update(
+            ...     "sc_abc123",
+            ...     [
+            ...         {
+            ...             "entity_type": "proposed_rate_plan_tier",
+            ...             "guid": "prpt_xyz",
+            ...             "fields": {"rate_override": 850.0, "enrollment": 150},
+            ...         },
+            ...         {
+            ...             "entity_type": "proposed_contribution_tier",
+            ...             "guid": "pct_xyz",
+            ...             "fields": {"contribution": 250.0},
+            ...         },
+            ...     ],
+            ... )
+        """
+        data = self._http.post(
+            f"/scenario/{guid}/bulkupdate",
+            json={"updates": updates},
+        )
+        return ScenarioData.model_validate(data)

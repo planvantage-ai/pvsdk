@@ -5,50 +5,146 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ColumnNullDefault(BaseModel):
+    """How null/empty values in a census column should be filled in."""
+
+    strategy: str  # "none", "value", "average", "median", "mode"
+    value: Optional[Any] = None  # the computed or specified default
+
+
+class CensusColumnMetadata(BaseModel):
+    """Metadata for a single column in an uploaded census file."""
+
+    name: str  # Exact column name as it appeared in the file
+    data_type: str  # "text", "integer", "float", "date", "boolean"
+    unique_values: Optional[list[str]] = None  # populated for low-cardinality text columns
+    min_value: Optional[float] = None
+    max_value: Optional[float] = None
+    null_count: int = 0
+    total_count: int = 0
+    null_default: Optional[ColumnNullDefault] = None
+
+
+class AmbiguousColumnCandidate(BaseModel):
+    """A candidate column for plan or tier disambiguation."""
+
+    column_index: int
+    header_name: str
+    score: int
+    sample_values: list[str] = Field(default_factory=list)
+
+
+class AmbiguousColumnsInfo(BaseModel):
+    """Info about ambiguous Plan/Tier column candidates.
+
+    The ``resolved_*`` fields are populated when one of the column types was
+    auto-resolved by the backend's scoring heuristic and only the other type
+    needs user disambiguation.
+    """
+
+    plan_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
+    tier_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
+    resolved_plan_column: Optional[int] = None
+    resolved_tier_column: Optional[int] = None
 
 
 class CensusSchemaConfig(BaseModel):
-    """Census field schema configuration."""
+    """Census schema — column metadata and disambiguation state.
 
-    has_subscriber_key: bool = False
-    age_format: Optional[str] = None
-    service_format: Optional[str] = None
-    has_zip_code: bool = False
-    has_gender: bool = False
-    has_salary: bool = False
-    custom_field_names: list[str] = Field(default_factory=list)
+    The ``columns`` map is keyed by the exact column name as it appeared in
+    the uploaded file (case-sensitive). Use case-insensitive lookups in your
+    own code if you need to match user input.
+    """
+
+    columns: dict[str, CensusColumnMetadata] = Field(default_factory=dict)
+    disambiguation_info: Optional[AmbiguousColumnsInfo] = None
 
 
 class CensusPlanMapping(BaseModel):
-    """Mapping from census plan values to rate plans."""
+    """Mapping from census plan values to a rate plan."""
 
     census_column: str
     census_values: list[str]
     rate_plan_guid: str
-    rate_plan_name: str
+    rate_plan_name: Optional[str] = None
     confidence: float = 0.0
     matched_count: int = 0
 
 
 class CensusTierMapping(BaseModel):
-    """Mapping from census tier values to standard tiers."""
+    """Mapping from census tier values to a standard tier name."""
 
     census_column: str
     census_values: list[str]
     rate_plan_tier_name_id: int
-    tier_name: str
+    tier_name: Optional[str] = None
     confidence: float = 0.0
     matched_count: int = 0
 
 
 class CensusOptOutMapping(BaseModel):
-    """Mapping for opt-out/waived coverage values."""
+    """Mapping for opt-out / waived coverage values."""
 
     census_column: str
     census_values: list[str]
-    reason: str
+    reason: str  # "waived", "declined", "not_eligible", etc.
     matched_count: int = 0
+
+
+class CensusMappingInfo(BaseModel):
+    """Metadata about the census being mapped."""
+
+    file_name: Optional[str] = None
+    total_rows: Optional[int] = None
+    enrollment_type: Optional[str] = None  # "enrolled_only" or "all_eligibles"
+    subscriber_key_column: Optional[str] = None
+
+
+class CensusFilterRule(BaseModel):
+    """A single filter rule used for include/exclude rules and group criteria."""
+
+    column: str
+    operator: str  # "equals", "in", "less_than", "greater_than", "between"
+    value: Any = None
+
+
+class CensusMappingFilters(BaseModel):
+    """Filtering rules applied to census rows when computing enrollment."""
+
+    description: Optional[str] = None
+    include_rules: Optional[list[CensusFilterRule]] = None
+    exclude_rules: Optional[list[CensusFilterRule]] = None
+
+
+class CensusSubgroup(BaseModel):
+    """A single contribution subgroup defined by a filter rule."""
+
+    group_name: str
+    filter_rule: CensusFilterRule
+    contribution_group_guid: Optional[str] = None
+    matched_count: int = 0
+
+
+class CensusSubgroupConfig(BaseModel):
+    """Configuration for splitting census rows into contribution subgroups."""
+
+    enabled: bool = False
+    grouping_column: Optional[str] = None
+    grouping_type: Optional[str] = None  # "salary_bands" or "custom"
+    groups: Optional[list[CensusSubgroup]] = None
+
+
+class CensusParticipationAdjustment(BaseModel):
+    """Configuration for adjusting participation rates after mapping."""
+
+    enabled: bool = False
+    type: Optional[str] = None  # "percentage_increase" or "percentage_decrease"
+    value: Optional[float] = None
+    apply_to: Optional[str] = None  # "all" or a specific plan GUID
+    description: Optional[str] = None
 
 
 class CensusMappingValidation(BaseModel):
@@ -63,10 +159,13 @@ class CensusMappingValidation(BaseModel):
 class CensusMappingConfig(BaseModel):
     """Full census mapping configuration."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     version: str = ""
     generated_at: Optional[datetime] = None
-    census_info: dict[str, Any] = Field(default_factory=dict)
+    census_info: Optional[CensusMappingInfo] = None
     schema_config: Optional[CensusSchemaConfig] = Field(default=None, alias="schema")
+    filters: Optional[CensusMappingFilters] = None
     plan_mappings: list[CensusPlanMapping] = Field(default_factory=list)
     tier_mappings: list[CensusTierMapping] = Field(default_factory=list)
     opt_out_mappings: list[CensusOptOutMapping] = Field(default_factory=list)
@@ -74,14 +173,25 @@ class CensusMappingConfig(BaseModel):
     unique_tier_values: list[str] = Field(default_factory=list)
     plan_value_counts: dict[str, int] = Field(default_factory=dict)
     tier_value_counts: dict[str, int] = Field(default_factory=dict)
+    plan_tier_counts: Optional[dict[str, dict[str, int]]] = None
+    contribution_subgroups: Optional[CensusSubgroupConfig] = None
+    participation_adjustment: Optional[CensusParticipationAdjustment] = None
+    contribution_group_snapshot: Optional[dict[str, list[str]]] = None
+    rate_plan_tier_snapshot: Optional[list[str]] = None
     validation: Optional[CensusMappingValidation] = None
-
-    class Config:
-        populate_by_name = True
 
 
 class CensusInfo(BaseModel):
-    """Census summary information."""
+    """Census summary information.
+
+    The census has two independent statuses:
+
+    - ``processing_status``: result of file upload + parse (immutable after upload)
+    - ``mapping_status``: result of LLM mapping (separate; may retry without re-uploading)
+
+    Both use the same value space: ``pending``, ``processing``,
+    ``disambiguating``, ``mapped``, ``success``, ``failed``.
+    """
 
     guid: str
     name: str
@@ -90,12 +200,19 @@ class CensusInfo(BaseModel):
     row_count: int
     processing_status: str
     processing_error: Optional[str] = None
+    mapping_status: Optional[str] = None
+    mapping_error: Optional[str] = None
     schema_config: Optional[CensusSchemaConfig] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 class CensusData(BaseModel):
-    """Full census data."""
+    """Full census data.
+
+    See :class:`CensusInfo` for the dual-status story (``processing_status``
+    vs ``mapping_status``).
+    """
 
     guid: str
     name: str
@@ -105,26 +222,31 @@ class CensusData(BaseModel):
     row_count: int
     processing_status: str
     processing_error: Optional[str] = None
+    mapping_status: Optional[str] = None
+    mapping_error: Optional[str] = None
     schema_config: Optional[CensusSchemaConfig] = None
     mapping_config: Optional[CensusMappingConfig] = None
     created_at: datetime
     updated_at: datetime
 
 
-class AmbiguousColumnCandidate(BaseModel):
-    """A candidate column for plan or tier disambiguation."""
+class PIIDetection(BaseModel):
+    """A potential PII column flagged during upload."""
 
+    column_name: str
     column_index: int
-    header_name: str
-    score: int
-    sample_values: list[str] = Field(default_factory=list)
+    pii_type: str  # "SSN", "Name", "Address", "Phone", "Email"
+    detection_type: str  # "header" or "content"
+    sample_row: Optional[int] = None
+    sample_value: Optional[str] = None  # Masked sample for context
 
 
-class AmbiguousColumnsInfo(BaseModel):
-    """Info about ambiguous Plan/Tier column candidates."""
+class CensusValidationError(BaseModel):
+    """A validation error in census data."""
 
-    plan_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
-    tier_candidates: list[AmbiguousColumnCandidate] = Field(default_factory=list)
+    row: int
+    column: str
+    message: str
 
 
 class CensusUploadResult(BaseModel):
@@ -135,8 +257,9 @@ class CensusUploadResult(BaseModel):
     row_count: int = 0
     plans_found: list[str] = Field(default_factory=list)
     tiers_found: list[str] = Field(default_factory=list)
-    errors: list[dict[str, Any]] = Field(default_factory=list)
+    errors: list[CensusValidationError] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+    pii_detections: Optional[list[PIIDetection]] = None
     needs_disambiguation: bool = False
     ambiguous_columns: Optional[AmbiguousColumnsInfo] = None
 

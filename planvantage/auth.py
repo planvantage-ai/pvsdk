@@ -57,12 +57,17 @@ class AuthConfig:
     def get_headers(self) -> dict[str, str]:
         """Get authentication headers for API requests.
 
+        Note: Content-Type is intentionally omitted. httpx sets it per-request
+        based on body type (application/json for json=, multipart/form-data with
+        boundary for files=). Hardcoding Content-Type on the persistent client
+        breaks file uploads, since the client default overrides httpx's
+        auto-generated multipart Content-Type with boundary.
+
         Returns:
             Dictionary of headers including Authorization bearer token.
         """
         return {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
             "Accept": "application/json",
             "X-PV-Client": "python-sdk",
         }

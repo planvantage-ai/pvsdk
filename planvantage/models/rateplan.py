@@ -1,7 +1,7 @@
 """RatePlan models."""
 
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -13,6 +13,15 @@ class RateMethod(str, Enum):
 
     TIER_RATES = "tierRates"
     SINGLE_EE_RATE = "singleEERateWithRatios"
+    MANUAL = "manual"
+
+
+class HSAMethod(str, Enum):
+    """HSA calculation method."""
+
+    GROSS = "gross"
+    NET = "net"
+    SEPARATE = "separate"
 
 
 class TierNameSetData(PlanVantageModel):
@@ -28,29 +37,23 @@ class RatePlanTierData(PlanVantageModel):
 
     guid: Optional[str] = None
     rate_plan_guid: Optional[str] = None
-    name: Optional[str] = None
-    rate: Optional[float] = None
-    ratio: Optional[float] = None
+    order: Optional[float] = None
+    tier_name: Optional[str] = None
+    tier_ratio: Optional[float] = None
     enrollment: Optional[int] = None
-    salary_percent: Optional[float] = None
-    order: Optional[int] = None
-    is_custom: Optional[bool] = None
+    adult_lives: Optional[float] = None
+    hsa_amount: Optional[float] = None
+    rate: Optional[float] = None
+    rate_override: Optional[float] = None
 
 
 class RatePlanAdjustmentData(PlanVantageModel):
-    """Rate plan adjustment."""
+    """Rate plan adjustment (multiplier applied to base rates)."""
 
     guid: Optional[str] = None
     rate_plan_guid: Optional[str] = None
-    rate_tier_guid: Optional[str] = None
     name: Optional[str] = None
-    value: Optional[float] = None
-    value_type: Optional[str] = None
-    calc_type: Optional[str] = None
-    is_credit: Optional[bool] = None
-    is_taxable: Optional[bool] = None
-    is_contributable: Optional[bool] = None
-    order: Optional[int] = None
+    adjustment_factor: Optional[float] = None
 
 
 class RatePlanData(PlanVantageModel):
@@ -59,12 +62,12 @@ class RatePlanData(PlanVantageModel):
     guid: Optional[str] = None
     scenario_guid: Optional[str] = None
     plan_design_guid: Optional[str] = None
-    name: Optional[str] = None
-    rate_method: Optional[RateMethod] = None
-    rate: Optional[float] = None
-    rate_increase: Optional[float] = None
-    rate_basis: Optional[str] = None
-    order: Optional[int] = None
+    plan_name: Optional[str] = None
+    plan_color: Optional[str] = None
+    order: Optional[float] = None
+    av: Optional[float] = None
+    rv: Optional[float] = None
+    plan_spread: Optional[float] = None
     tiers: Optional[list[RatePlanTierData]] = None
     adjustments: Optional[list[RatePlanAdjustmentData]] = None
 
@@ -74,33 +77,30 @@ class RatePlanInput(PlanVantageModel):
 
     scenario_guid: str
     plan_design_guid: Optional[str] = None
-    name: Optional[str] = None
-    rate_method: Optional[RateMethod] = None
-    rate_basis: Optional[str] = None
+    plan_name: Optional[str] = None
+    order: Optional[float] = None
+    plan_spread: Optional[float] = None
 
 
 class RatePlanTierInput(PlanVantageModel):
     """Input for creating rate plan tier."""
 
     rate_plan_guid: str
-    name: Optional[str] = None
-    rate: Optional[float] = None
-    ratio: Optional[float] = None
+    tier_name: Optional[str] = None
     enrollment: Optional[int] = None
+    hsa_amount: Optional[float] = None
+    order: Optional[float] = None
+    tier_ratio: Optional[float] = None
+    rate: Optional[float] = None
+    rate_override: Optional[float] = None
 
 
 class RatePlanAdjustmentInput(PlanVantageModel):
     """Input for creating rate plan adjustment."""
 
     rate_plan_guid: str
-    rate_tier_guid: Optional[str] = None
-    name: Optional[str] = None
-    value: Optional[float] = None
-    value_type: Optional[str] = None
-    calc_type: Optional[str] = None
-    is_credit: Optional[bool] = None
-    is_taxable: Optional[bool] = None
-    is_contributable: Optional[bool] = None
+    name: str
+    adjustment_factor: float
 
 
 class RateModelSettingsData(PlanVantageModel):
@@ -123,6 +123,7 @@ class RateModelSettingsData(PlanVantageModel):
     show_group_totals: Optional[bool] = None
     sync_enrollment_with_rate_model: Optional[bool] = None
     use_rate_override: Optional[bool] = None
+    show_subgroup_comparison: Optional[bool] = None
 
 
 class RateModelAssumptionsData(PlanVantageModel):
@@ -134,8 +135,7 @@ class RateModelAssumptionsData(PlanVantageModel):
     current_loss_ratio: Optional[float] = None
     rate_increase: Optional[float] = None
     rate_method: Optional[RateMethod] = None
-    net_hsa: Optional[bool] = None
-    hsa_method: Optional[str] = None  # "gross", "net", or "separate"
+    hsa_method: Optional[HSAMethod] = None
     derived_loss_ratio: Optional[float] = None
     claims_auto_calc_mode: Optional[bool] = None
 

@@ -120,3 +120,47 @@ class TestScenariosResource:
         )
 
         client.scenarios.sync_enrollment("sc_test123")
+
+    def test_bulk_update(
+        self,
+        client: PlanVantageClient,
+        mock_api: respx.MockRouter,
+        sample_scenario_data: dict[str, Any],
+    ) -> None:
+        """Test bulk updating tiers across rate and contribution models."""
+        route = mock_api.post("/scenario/sc_test123/bulkupdate").mock(
+            return_value=Response(200, json=sample_scenario_data)
+        )
+
+        updates = [
+            {
+                "entity_type": "proposed_rate_plan_tier",
+                "guid": "prpt_xyz",
+                "fields": {"rate_override": 850.0, "enrollment": 150},
+            },
+            {
+                "entity_type": "current_rate_plan_tier",
+                "guid": "crpt_xyz",
+                "fields": {"rate": 800.0, "enrollment": 100, "hsa_amount": 50.0},
+            },
+            {
+                "entity_type": "proposed_contribution_tier",
+                "guid": "pct_xyz",
+                "fields": {"contribution": 250.0, "enrollment": 100},
+            },
+            {
+                "entity_type": "current_contribution_tier",
+                "guid": "cct_xyz",
+                "fields": {"contribution": 200.0},
+            },
+        ]
+        result = client.scenarios.bulk_update("sc_test123", updates)
+
+        assert isinstance(result, ScenarioData)
+        assert result.guid == "sc_test123"
+        assert route.called
+        sent = route.calls.last.request
+        import json as _json
+
+        body = _json.loads(sent.content)
+        assert body == {"updates": updates}

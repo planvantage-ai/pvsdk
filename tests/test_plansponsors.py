@@ -20,7 +20,7 @@ class TestPlanSponsorsResource:
         sample_plansponsor_list: list[dict[str, Any]],
     ) -> None:
         """Test listing plan sponsors."""
-        mock_api.get("/plansponsor").mock(
+        mock_api.get("/plansponsors").mock(
             return_value=Response(200, json=sample_plansponsor_list)
         )
 

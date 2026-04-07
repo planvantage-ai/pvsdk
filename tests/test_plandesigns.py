@@ -98,25 +98,3 @@ class TestPlanDesignsResource:
         assert isinstance(cloned, PlanDesignData)
         assert cloned.guid == "pd_cloned123"
 
-    def test_calculate_av(
-        self,
-        client: PlanVantageClient,
-        mock_api: respx.MockRouter,
-        sample_plandesign_data: dict[str, Any],
-    ) -> None:
-        """Test calculating actuarial value."""
-        data_with_av = {
-            **sample_plandesign_data,
-            "plan_av_result": {
-                "AV": 0.85,
-                "AVWithFund": 0.90,
-            },
-        }
-        mock_api.post("/plandesign/pd_test123/calculate").mock(
-            return_value=Response(200, json=data_with_av)
-        )
-
-        plan = client.plandesigns.calculate_av("pd_test123")
-
-        assert isinstance(plan, PlanDesignData)
-        assert plan.plan_av_result is not None

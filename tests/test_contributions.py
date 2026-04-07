@@ -8,6 +8,7 @@ from httpx import Response
 
 from planvantage import PlanVantageClient
 from planvantage.models.contribution import (
+    ContributionOptionData,
     ContributionOptionItemsLists,
     ProposedContributionGroupData,
     ProposedContributionOptionStatusData,
@@ -97,12 +98,20 @@ class TestCurrentContributionGroupsResource:
         client: PlanVantageClient,
         mock_api: respx.MockRouter,
     ) -> None:
-        """Test copying current contribution setup to proposed."""
-        mock_api.post("/currentcontributiongroup/ccg_test123/copy").mock(
-            return_value=Response(200)
+        """Test copying current contribution group into a proposed option."""
+        route = mock_api.post("/currentcontributiongroup/ccg_test123/copy").mock(
+            return_value=Response(204)
         )
 
-        client.current_contribution_groups.copy_to_proposed("ccg_test123")
+        client.current_contribution_groups.copy_to_proposed(
+            "ccg_test123", proposed_option_guid="pco_target"
+        )
+
+        assert route.called
+        import json as _json
+
+        body = _json.loads(route.calls.last.request.content)
+        assert body == {"proposedOptionGuid": "pco_target"}
 
 
 class TestCurrentContributionTiersResource:
@@ -335,6 +344,41 @@ class TestProposedContributionOptionsResource:
 
         client.proposed_contribution_options.copy_option_enrollment("pco_test123")
 
+    def test_import_from_scenario(
+        self,
+        client: PlanVantageClient,
+        mock_api: respx.MockRouter,
+    ) -> None:
+        """Test importing a contribution option from another scenario."""
+        new_option = {
+            "guid": "pco_new",
+            "scenario_guid": "sc_target",
+            "name": "Imported Option",
+            "comparison_group_guid": None,
+        }
+        route = mock_api.post("/scenario/sc_target/importcontributionoption").mock(
+            return_value=Response(201, json=new_option)
+        )
+
+        result = client.proposed_contribution_options.import_from_scenario(
+            target_scenario_guid="sc_target",
+            source_option_guid="pco_source",
+            include_groups=True,
+            sync_with_census=False,
+        )
+
+        assert isinstance(result, ContributionOptionData)
+        assert result.guid == "pco_new"
+        assert route.called
+        import json as _json
+
+        body = _json.loads(route.calls.last.request.content)
+        assert body == {
+            "source_option_guid": "pco_source",
+            "include_groups": True,
+            "sync_with_census": False,
+        }
+
 
 class TestProposedContributionGroupsResource:
     """Tests for ProposedContributionGroupsResource."""
@@ -417,6 +461,20 @@ class TestProposedContributionGroupsResource:
         ).mock(return_value=Response(204))
 
         client.proposed_contribution_groups.remove_rate_plan("pcg_test123", "rp_test123")
+
+    def test_copy_criteria_from_current(
+        self,
+        client: PlanVantageClient,
+        mock_api: respx.MockRouter,
+    ) -> None:
+        """Test copying census criteria from the matching current group."""
+        route = mock_api.post(
+            "/proposedcontributiongroup/pcg_test123/copycriteriafromcurrent"
+        ).mock(return_value=Response(204))
+
+        client.proposed_contribution_groups.copy_criteria_from_current("pcg_test123")
+
+        assert route.called
 
 
 class TestProposedContributionTiersResource:

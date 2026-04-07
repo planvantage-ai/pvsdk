@@ -23,6 +23,7 @@ class ScenarioData(PlanVantageModel):
     guid: Optional[str] = None
     name: Optional[str] = None
     order: Optional[float] = None
+    census_mapping_stale: Optional[bool] = None
     # Additional fields will be accepted via extra="allow" in base config
 
 

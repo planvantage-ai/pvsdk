@@ -28,7 +28,7 @@ class PlanSponsorsResource(BaseResource):
             >>> for sponsor in sponsors:
             ...     print(sponsor.name)
         """
-        data = self._http.get("/plansponsor")
+        data = self._http.get("/plansponsors")
         if isinstance(data, list):
             return [PlanSponsorInfo.model_validate(item) for item in data]
         return []

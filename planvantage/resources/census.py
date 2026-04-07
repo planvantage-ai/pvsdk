@@ -89,7 +89,7 @@ class CensusResource(BaseResource):
             ...     result = client.census.upload("ps_abc123", f, name="2024 Census")
         """
         files = {"file": file}
-        data = {"plan_sponsor_guid": plan_sponsor_guid}
+        data = {"planSponsorGuid": plan_sponsor_guid}
         if name:
             data["name"] = name
 
@@ -241,28 +241,42 @@ class CensusResource(BaseResource):
     def disambiguate(
         self,
         guid: str,
-        plan_column_index: int,
-        tier_column_index: int,
+        plan_column_index: Optional[int] = None,
+        tier_column_index: Optional[int] = None,
     ) -> CensusUploadResult:
         """Resolve ambiguous plan/tier columns after an ambiguous census upload.
+
+        Either argument may be omitted when the backend already resolved that
+        column during the initial upload (the resolved index is stored on the
+        census's schema config). Pass only the column the user actually had to
+        choose between candidates for.
 
         Args:
             guid: The census GUID.
             plan_column_index: Confirmed column index for plan names.
+                Omit if the backend already resolved this column.
             tier_column_index: Confirmed column index for tier names.
+                Omit if the backend already resolved this column.
 
         Returns:
             Upload result after re-parsing with confirmed columns.
 
         Example:
+            >>> # Both columns ambiguous - user picked both
             >>> result = client.census.disambiguate("census_abc", 2, 4)
+            >>>
+            >>> # Only the tier column was ambiguous
+            >>> result = client.census.disambiguate("census_abc", tier_column_index=4)
         """
+        body: dict[str, Any] = {}
+        if plan_column_index is not None:
+            body["plan_column_index"] = plan_column_index
+        if tier_column_index is not None:
+            body["tier_column_index"] = tier_column_index
+
         response = self._http.post(
             f"/census/{guid}/disambiguate",
-            json={
-                "plan_column_index": plan_column_index,
-                "tier_column_index": tier_column_index,
-            },
+            json=body,
         )
         return CensusUploadResult.model_validate(response)
 
