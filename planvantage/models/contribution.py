@@ -69,9 +69,10 @@ class ContributionOptionData(PlanVantageModel):
     order: Optional[float] = None
     prompt: Optional[str] = None
     ai_calc_enabled: Optional[bool] = None
+    allow_group_mgmt: Optional[bool] = None
     change_since_prompt: Optional[bool] = None
     change_since_ignore: Optional[bool] = None
-    processing_status: Optional[str] = None  # pending|processing_groups|processing|success|failed|canceled
+    processing_status: Optional[str] = None  # pending|queued|processing_groups|processing|success|failed|canceled
     processing_error: Optional[str] = None
     comparison_group_guid: Optional[str] = None
     groups: Optional[list[ContributionGroupData]] = None
